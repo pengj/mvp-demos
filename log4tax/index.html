@@ -101,7 +101,7 @@
       /* tab bar */
       .tabbar{
         flex:none; height:64px; border-top:1px solid var(--divider); background:var(--card);
-        display:grid; grid-template-columns:repeat(4,1fr); padding-bottom:8px;
+        display:grid; grid-template-columns:repeat(5,1fr); padding-bottom:8px;
       }
       .tab{
         border:0; background:none; cursor:pointer; color:var(--ink3);
@@ -179,6 +179,25 @@
       .state-line.ok svg{ color:var(--received); } .state-line.warn svg{ color:var(--missing); }
       .next-line{ margin-top:7px; font-size:13px; color:var(--ink2); line-height:1.45; padding-left:23px; }
       .next-line b{ color:var(--ink); font-weight:600; }
+      button.next-line{
+        background:none; border:0; font-family:inherit; width:100%; text-align:left; cursor:pointer; display:block;
+      }
+      button.next-line .nx{ color:var(--accent); font-weight:700; }
+      .next-line.waiting svg{ width:13px; height:13px; vertical-align:-2px; margin-right:5px; color:var(--ink3); }
+      .next-line .chase{
+        border:0; background:none; color:var(--accent); font-family:inherit; font-size:13px; font-weight:600;
+        cursor:pointer; padding:0; margin-left:4px; text-decoration:underline; text-underline-offset:2px;
+      }
+      .filing-go{
+        display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%;
+        background:none; border:0; border-top:1px solid var(--divider); margin-top:12px; padding:10px 0 0;
+        font-family:inherit; font-size:13.5px; font-weight:600; color:var(--accent); cursor:pointer; text-align:left;
+      }
+      .find-q{
+        width:100%; margin-top:12px; padding:11px 12px; font-family:inherit; font-size:15px;
+        border:1.5px solid var(--divider); border-radius:10px; background:var(--card); color:var(--ink);
+      }
+      .find-q:focus{ outline:none; border-color:var(--accent); }
       .detail-toggle{
         display:flex; align-items:center; justify-content:space-between; gap:8px;
         width:100%; background:none; font-family:inherit; text-align:left;
@@ -451,7 +470,7 @@
     <header class="page-head">
       <h1>Log4Tax — MVP demo</h1>
       <span class="demo-badge">Demo · sample data</span>
-      <p>An interactive mock-up of the Log4Tax iPhone app, built from the v1 spec. Everything on the phone is fictional sample data, nothing is saved, and every count is recomputed live from the sample records as you file documents.</p>
+      <p>An interactive mock-up of the Log4Tax iPhone app, built from the spec’s design system with the latest UX review applied — a filing-year card for January, “Next” vs “Waiting” lines, Undo after filing, and Find as a first-class surface. Everything on the phone is fictional sample data, nothing is saved, and every count is recomputed live from the sample records as you file documents.</p>
     </header>
 
     <div class="stage">
@@ -476,6 +495,7 @@
                 <div id="year-timeline"></div>
                 <p class="home-status" id="home-status">Checking your packs…</p>
               </div>
+              <div id="filing-card"></div>
               <div class="boundary"><b>Collects documents only.</b> Log4Tax does not file your return, calculate tax, or give advice — it keeps the evidence, so January is just handing over a tidy pack.</div>
               <div class="demo-strip">Sample household: one job, one rental property (“14 Maple Drive”), one sole-trader business. All names and figures are fictional. Demo date: 18 October 2026.</div>
 
@@ -515,10 +535,22 @@
             <section class="screen" id="scr-export">
               <div class="year-head">
                 <p class="yr" style="font-size:24px;">Export a pack</p>
-                <p class="sub">The January flow: one ZIP per pack per tax year, for your accountant or your filing tool.</p>
+                <p class="sub">The January flow: one ZIP per pack per tax year, for your accountant or your filing tool. In filing season the flow opens on the filing year — the one carrying the 31 January deadline — not the year you are still collecting for.</p>
               </div>
+              <div class="pack-pills" id="export-years"></div>
               <div class="pack-pills" id="export-pills"></div>
               <div id="export-body"></div>
+            </section>
+
+            <!-- ===== FIND ===== -->
+            <section class="screen" id="scr-find">
+              <div class="inbox-head">
+                <h2>Find</h2>
+                <p>Collecting is half the product; getting a document back out is the other half. Search everything filed by type, supplier or category — recently filed sits on top, because that is usually what you are after.</p>
+              </div>
+              <input type="search" id="find-q" class="find-q" placeholder="Search filed documents…" aria-label="Search filed documents">
+              <div class="chips" id="find-chips" style="margin-top:10px"></div>
+              <div id="find-body"></div>
             </section>
           </div>
 
@@ -548,6 +580,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M12 8v8M8 12h8"/></svg>
               Add
             </button>
+            <button class="tab" data-scr="find">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              Find
+            </button>
             <button class="tab" data-scr="export">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
               Export
@@ -564,12 +600,12 @@
         <button class="step" data-goto="home">
           <span class="n">1</span>
           <span><h3>Position in the year</h3>
-          <p>Home opens on the tax year itself: one timeline, April to April, today marked — solid points are in, hollow ones are still owed, and a single sentence states where you stand. Each pack then gets exactly two things: its state in one line, and the <b>one next action</b>. The <b>Expected · Received · Missing</b> counts, the Property month strip (<b>August missing</b>) and the Business invoice-sequence gap (<b>#1042</b>, between #1041 and #1043) live one tap down, in the pack’s audit view — where the filed documents are also listed, each shown as itself.</p></span>
+          <p>Home opens on the tax year itself: one timeline, April to April, today marked — solid points are in, hollow ones are still owed (one point per month across all packs; a busy month like May can carry several expectations). The headline sentence works in a fixed order: <b>the tray first</b> (a document waiting to review outranks everything), then the filing year, then the collecting year — and it always names its year. In filing season a separate <b>2025/26 filing card</b> carries the 31 January deadline, so the two years never blur. Each pack then gets its state in one line and a single next line in one of two honest forms: <b>Next:</b> when it is yours to do, <b>Waiting:</b> when it is the agent’s or the bank’s — with a chase route, not a fake task. The <b>Expected · Received · Missing</b> counts, the Property month strip (<b>August missing</b>) and the Business invoice-sequence gap (<b>#1042</b>, between #1041 and #1043) live one tap down, in the pack’s audit view.</p></span>
         </button>
         <button class="step" data-goto="inbox">
           <span class="n">2</span>
           <span><h3>Inbox triage — review, confirm, file</h3>
-          <p>A letting-agent statement is waiting in the review tray. Open it and the sheet is deliberately plain: the document itself at the top, the details the app read — date, amount, supplier, type — as a quiet list beneath, each one editable, and a single <b>File</b> button. The app only speaks up when it is unsure: add the repair invoice from the Add tab and one field is flagged as a faint scan. Note the <b>violet bucket</b>: residential finance costs sit apart from ordinary expenses, because Section 24 makes mortgage interest a 20% tax credit, not a deduction. File the statement and August turns solid on the Home timeline.</p></span>
+          <p>A letting-agent statement is waiting in the review tray. Open it and the sheet is deliberately plain: the document itself at the top, the details the app read — date, amount, supplier, type — as a quiet list beneath, each one editable, and a single <b>File</b> button. The app only speaks up when it is unsure: add the repair invoice from the Add tab and one field is flagged as a faint scan. Note the <b>violet bucket</b>: residential finance costs sit apart from ordinary expenses, because Section 24 makes mortgage interest a 20% tax credit, not a deduction. File the statement and August turns solid on the Home timeline — and if you filed the wrong thing, the confirmation carries <b>Undo</b>: one tap puts it back in the tray.</p></span>
         </button>
         <button class="step" data-goto="add">
           <span class="n">3</span>
@@ -579,12 +615,17 @@
         <button class="step" data-goto="export">
           <span class="n">4</span>
           <span><h3>January export — Missing first</h3>
-          <p>Pick a pack and the export flow shows you the <b>Missing review before anything is generated</b> — gaps are stated, not discovered mid-filing. The pack preview builds its folder tree, <span class="mono">YYYY-MM-DD_type_source_amount</span> filenames, index and explicit Missing page from the live records. File everything a pack is missing first, and the preview states <b>“Nothing missing”</b> plainly at the top instead.</p></span>
+          <p>The flow opens on the <b>filing year (2025/26)</b>, already complete in this household — switch to 2026/27 to export the collecting year. Pick a pack and the export shows you the <b>Missing review before anything is generated</b> — gaps are stated, not discovered mid-filing. The pack preview builds its folder tree, <span class="mono">YYYY-MM-DD_type_source_amount</span> filenames, index and explicit Missing page from the live records. File everything a pack is missing first, and the preview states <b>“Nothing missing”</b> plainly at the top instead.</p></span>
         </button>
         <button class="step" data-goto="home">
           <span class="n">5</span>
           <span><h3>Quiet reminders</h3>
-          <p>On Home, under the packs: the P11D deadline (received), the April–June interest-certificate season, a <b>gas safety expiry with days remaining</b> for the property, and the 31 January filing deadline. One reminder per missing item — never nagging.</p></span>
+          <p>On Home, under the packs: the P11D deadline (received), the April–June interest-certificate season, a <b>gas safety expiry with days remaining</b> for the property, and the 31 January filing deadline — labelled for 2025/26, the year it belongs to. One reminder per missing item — never nagging.</p></span>
+        </button>
+        <button class="step" data-goto="find">
+          <span class="n">6</span>
+          <span><h3>Finding it again</h3>
+          <p>Retrieval is a first-class surface, not an afterthought: the <b>Find</b> tab searches every filed document by type, supplier or category, with <b>recently filed</b> on top — the “my accountant needs the gas certificate, now” moment. Each property’s compliance documents are also grouped together in its audit view, so the deposit certificate and the gas safety record are never buried in the general list.</p></span>
         </button>
 
         <div class="note"><b>The boundary, by design:</b> Log4Tax collects documents only — it does not file your return, calculate tax, or give advice. There is no account and no server; documents live on the phone behind Face ID, and the export index is an inventory of what was collected, never a set of tax figures.</div>
@@ -706,7 +747,7 @@
                    detail:'Interest paid in the year — belongs in the violet finance-cost bucket' } }
       ];
 
-      var state = { docs: initialDocs(), addedRoutes: {}, exportPack:'property', exportStage:'review', openPacks:{} };
+      var state = { docs: initialDocs(), addedRoutes: {}, exportPack:'property', exportYear:'cur', exportStage:'review', openPacks:{}, findQuery:'', findPack:'all' };
 
       /* ================= helpers ================= */
       function $(s){ return document.querySelector(s); }
@@ -801,15 +842,28 @@
         });
         return ok ? 'done' : 'missing';
       }
+      function monthInfo(m){
+        var exp = 2, got = 0; /* the two monthly patterns: agent statements + business bank statements */
+        if (filed('property','agent-statement').some(function(d){ return d.monthIndex === m; })) got++;
+        if (filed('business','bank-statement').some(function(d){ return d.monthIndex === m; })) got++;
+        PERSONAL_ITEMS.forEach(function(it){
+          if (PERSONAL_DUE[it.kind] === m){
+            exp++;
+            if (state.docs.some(function(d){ return d.status === 'filed' && d.pack === 'personal' && d.kind === it.kind && (!it.source || d.source === it.source); })) got++;
+          }
+        });
+        return { exp:exp, got:got };
+      }
       function timelineHTML(){
         var cells = MONTHS.map(function(name, m){
           var st = monthStatus(m);
+          var info = monthInfo(m);
           var today = m === CUR_MONTH ? '<span class="tl-today">Today</span>' : '';
-          return '<div class="tl-m">' + today + '<span class="tl-dot ' + st + '"></span><span class="tl-lab">' + name + '</span></div>';
+          return '<div class="tl-m" title="' + FULLMONTHS[m] + ' — ' + info.got + ' of ' + info.exp + ' expectations in">' + today + '<span class="tl-dot ' + st + '"></span><span class="tl-lab">' + name + '</span></div>';
         }).join('');
         return '<div class="tl"><div class="tl-row">' + cells + '</div>' +
-          '<div class="tl-caption"><span>18 Oct 2026 · month 7 of 12</span><span class="tl-dl">Filing deadline · 31 Jan 2027</span></div>' +
-          '<div class="tl-legend">Solid point — in · hollow point — still owed</div></div>';
+          '<div class="tl-caption"><span>18 Oct 2026 · month 7 of 12</span><span class="tl-dl">Collecting year ends 5 Apr 2027</span></div>' +
+          '<div class="tl-legend">Solid point — in · hollow point — still owed. One point per month across all packs; a month can carry several expectations (May has three).</div></div>';
       }
       function countsHTML(r){
         var h = '<div class="counts">' +
@@ -832,27 +886,47 @@
                '<span><span class="sw" style="border:1.5px solid var(--ink3)"></span>This month</span>' +
                '<span><span class="sw" style="border:1.5px solid var(--divider)"></span>Not yet due</span></div>';
       }
+      /* The single next line, in two honest forms: "Next:" when the user can act,
+         "Waiting:" when someone else owes the document — never a fake task. */
       function nextAction(key){
         if (key === 'personal'){
           var r = readiness('personal');
-          if (r.missing > 0) return '<b>Next:</b> ' + r.missingItems[0].label + ' — banks issue these each spring, April to June.';
-          return '<b>Next:</b> nothing outstanding. This year’s certificates arrive again from April 2027.';
+          if (r.missing > 0) return { form:'action', goto:'add', html:'<b>Next:</b> add the ' + r.missingItems[0].label + ' — it arrived by email in May; share it in from Mail.' };
+          return { form:'none', html:'Nothing outstanding. This year’s certificates arrive again from April 2027.' };
         }
         if (key === 'property'){
           var sm = statementMonths('property','agent-statement');
           if (sm.missing.length){
             var m = sm.missing[0];
             var waiting = state.docs.some(function(d){ return d.status === 'inbox' && d.pack === 'property' && d.kind === 'agent-statement' && d.monthIndex === m; });
-            if (waiting) return '<b>Next:</b> file the ' + FULLMONTHS[m] + ' statement — it is waiting in your Inbox.';
-            return '<b>Next:</b> chase the ' + FULLMONTHS[m] + ' statement from Harbourview Lettings.';
+            if (waiting) return { form:'action', goto:'inbox', html:'<b>Next:</b> file the ' + FULLMONTHS[m] + ' statement — it is waiting in your Inbox.' };
+            return { form:'waiting', chase:true, html:'<b>Waiting:</b> ' + FULLMONTHS[m] + ' statement, from Harbourview Lettings — due around 5 ' + FULLMONTHS[m + 1] + '. Nothing for you to file yet.' };
           }
-          return '<b>Next:</b> ' + FULLMONTHS[CUR_MONTH] + ' statement — expected around 5 ' + FULLMONTHS[CUR_MONTH + 1] + ' ' + (CUR_MONTH >= 9 ? '2027' : '2026') + '.';
+          return { form:'waiting', html:'<b>Waiting:</b> ' + FULLMONTHS[CUR_MONTH] + ' statement, from Harbourview Lettings — expected around 5 ' + FULLMONTHS[CUR_MONTH + 1] + '.' };
         }
         var g = invoiceGaps();
-        if (g.gaps.length) return '<b>Next:</b> find invoice #' + g.gaps[0] + ' — or note why it was never issued.';
+        if (g.gaps.length) return { form:'action', goto:'add', html:'<b>Next:</b> find invoice #' + g.gaps[0] + ' — check Files, or mark it void in the audit view below.' };
         var bm = statementMonths('business','bank-statement');
-        if (bm.missing.length) return '<b>Next:</b> chase the ' + FULLMONTHS[bm.missing[0]] + ' bank statement.';
-        return '<b>Next:</b> ' + FULLMONTHS[CUR_MONTH] + ' bank statement — expected early ' + FULLMONTHS[CUR_MONTH + 1] + '.';
+        if (bm.missing.length) return { form:'waiting', html:'<b>Waiting:</b> ' + FULLMONTHS[bm.missing[0]] + ' bank statement, from Northbank Business.' };
+        return { form:'waiting', html:'<b>Waiting:</b> ' + FULLMONTHS[CUR_MONTH] + ' bank statement, from Northbank Business — expected early ' + FULLMONTHS[CUR_MONTH + 1] + '.' };
+      }
+      function nextLineHTML(key){
+        var na = nextAction(key);
+        if (na.form === 'action') return '<button type="button" class="next-line action" data-next="' + na.goto + '">' + na.html + ' <span class="nx" aria-hidden="true">›</span></button>';
+        if (na.form === 'waiting') return '<div class="next-line waiting">' + I.clock + na.html + (na.chase ? ' <button type="button" class="chase" data-chase="1">Chase the agent</button>' : '') + '</div>';
+        return '<div class="next-line">' + na.html + '</div>';
+      }
+      function complianceHTML(){
+        var rows = '';
+        var dep = filed('property','deposit-cert')[0];
+        if (dep) rows += '<div class="docitem sm">' + docThumb(dep) +
+          '<span class="di-main"><span class="di-t">' + dep.type + '</span><span class="di-s">' + dep.supplier + ' · ' + fmtDate(dep.date) + '</span></span>' +
+          '<span class="di-amt num">—</span></div>';
+        var gasDays = daysUntil(new Date(2026, 11, 12));
+        rows += '<div class="docitem sm"><span class="dthumb" aria-hidden="true"><span class="dt-from">GasSafe</span><span class="dt-lines"><i style="width:88%"></i><i style="width:64%"></i><i style="width:76%"></i></span><span class="dt-amt">CP12</span></span>' +
+          '<span class="di-main"><span class="di-t">Gas safety certificate (CP12)</span><span class="di-s">14 Maple Drive · expires 12 Dec 2026 · reminder set</span></span>' +
+          '<span class="pill warn">' + gasDays + ' days</span></div>';
+        return rows;
       }
       function filedListHTML(key){
         var docs = filed(key).slice().sort(function(a, b){ return a.date < b.date ? -1 : 1; });
@@ -867,11 +941,25 @@
         var totalMissing = ['personal','property','business'].reduce(function(n, k){ return n + readiness(k).missing; }, 0);
         var hs = $('#home-status');
         if (hs){
-          hs.textContent = totalMissing === 0
-            ? 'Everything due so far is in, across all three packs. January should be a formality.'
-            : totalMissing === 1
-              ? 'One item due so far is still outstanding — it is named under its pack below.'
-              : totalMissing + ' items due so far are still outstanding — each is named under its pack below.';
+          /* Truth hierarchy: the tray first, the filing year second, the collecting year third — each named. */
+          var inboxCount = state.docs.filter(function(d){ return d.status === 'inbox'; }).length;
+          var parts = [];
+          if (inboxCount) parts.push(inboxCount === 1 ? 'One document is waiting in your Inbox to review.' : inboxCount + ' documents are waiting in your Inbox to review.');
+          parts.push('2025/26 is ready to export — deadline 31 Jan 2027.');
+          parts.push(totalMissing === 0
+            ? 'For 2026/27, everything due so far is in.'
+            : 'For 2026/27, ' + totalMissing + (totalMissing === 1 ? ' item due so far is' : ' items due so far are') + ' still outstanding — named under its pack below.');
+          hs.textContent = parts.join(' ');
+        }
+        var fc = $('#filing-card');
+        if (fc){
+          var fd = daysUntil(new Date(2027, 0, 31));
+          fc.innerHTML = '<div class="card" style="margin-top:14px">' +
+            '<div class="top" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><h3>2025/26 — filing year</h3><div class="kind">The year that ended 5 April 2026 · return due 31 Jan 2027</div></div>' +
+            '<span class="pack-tag">' + fd + ' days left</span></div>' +
+            '<div class="state-line ok">' + I.check + '<span>Ready to export — everything collected for 2025/26 is in.</span></div>' +
+            '<button type="button" class="filing-go" id="filing-export"><span>Review &amp; export 2025/26</span><span aria-hidden="true">›</span></button></div>';
+          $('#filing-export').addEventListener('click', function(){ state.exportYear = 'prev'; state.exportStage = 'review'; goto('export'); });
         }
         var tl = $('#year-timeline'); if (tl) tl.innerHTML = timelineHTML();
         var html = '';
@@ -900,12 +988,13 @@
                   '<div class="top"><div><h3>' + p.name + '</h3><div class="kind">' + p.kind + '</div></div>' +
                   '<span class="pack-tag' + (p.paid ? ' paid' : '') + '">' + (p.paid ? 'Paid pack' : 'Included') + '</span></div>' +
                   stateLine +
-                  '<div class="next-line">' + nextAction(key) + '</div></div>' +
+                  nextLineHTML(key) + '</div>' +
                   '<button type="button" class="detail-toggle" data-toggle="' + key + '" aria-expanded="' + open + '"><span>' + (open ? 'Hide audit view' : 'Audit view — counts &amp; filed documents') + '</span>' + CHEV + '</button>' +
                   '<div class="pack-detail">' +
                     '<div class="detail-sec">Counts</div>' + countsHTML(r) +
                     (key === 'property' ? stripHTML() : '') +
                     '<div class="detail-sec">Filed in this pack · ' + filed(key).length + '</div>' + filedListHTML(key) +
+                    (key === 'property' ? '<div class="detail-sec">Compliance documents — grouped</div>' + complianceHTML() : '') +
                   '</div></div>';
         });
         $('#pack-cards').innerHTML = html;
@@ -915,6 +1004,12 @@
             state.openPacks[k] = !state.openPacks[k];
             renderHome();
           });
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-next]'), function(el){
+          el.addEventListener('click', function(ev){ ev.stopPropagation(); goto(el.getAttribute('data-next')); });
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-chase]'), function(el){
+          el.addEventListener('click', function(ev){ ev.stopPropagation(); toast('Chase ready — one quiet email to Harbourview Lettings, then it stops'); });
         });
         renderReminders();
       }
@@ -927,7 +1022,7 @@
           { icon:'cal', title:'P11D from your employer', sub:'Employers must issue it by 6 July 2026', pill: p11d ? '<span class="pill ok">Received</span>' : '<span class="pill warn">Outstanding</span>' },
           { icon:'bank', title:'Interest certificates — Apr to Jun', sub:'Banks issue one per account after the tax year. Northbank received' + (fernhill ? '; Fernhill Bank received too.' : '; Fernhill Bank still outstanding.'), pill: fernhill ? '<span class="pill ok">2 of 2 in</span>' : '<span class="pill warn">1 of 2 in</span>' },
           { icon:'flame', title:'Gas safety certificate — 14 Maple Drive', sub:'Expires 12 December 2026 · one reminder ahead of expiry, then it stops', pill:'<span class="pill warn">' + gasDays + ' days left</span>' },
-          { icon:'shield', title:'Self Assessment filing deadline', sub:'31 January 2027 — Log4Tax keeps the evidence; the return is filed in your usual tool or by your accountant', pill:'<span class="pill plain">' + fileDays + ' days</span>' }
+          { icon:'shield', title:'Self Assessment filing deadline — 2025/26', sub:'31 January 2027, for the year that ended 5 April 2026 — Log4Tax keeps the evidence; the return is filed in your usual tool or by your accountant', pill:'<span class="pill plain">' + fileDays + ' days</span>' }
         ];
         $('#reminders').innerHTML = items.map(function(r){
           return '<div class="rem"><div class="ric">' + I[r.icon] + '</div><div><div class="rt">' + r.title + '</div><div class="rs">' + r.sub + '</div></div>' + r.pill + '</div>';
@@ -1071,6 +1166,7 @@
       function fileIt(){
         var d = triage.doc, secs = ((Date.now() - triage.started) / 1000).toFixed(1);
         if (triage._tick) clearInterval(triage._tick);
+        var prev = { status:d.status, pack:d.pack, tag:d.tag, folder:d.folder };
         d.status = 'filed'; d.pack = triage.pack; d.tag = triage.tag;
         if (d.tag === FINANCE_TAG) d.folder = FINANCE_TAG;
         if (d.kind === 'repair-invoice') d.folder = (triage.repair === 'Improvement') ? 'Capital packet' : (d.tag || d.folder);
@@ -1079,8 +1175,16 @@
         $('#sheet-body').innerHTML = '<div class="filed-done"><span class="done-ic">' + I.check + '</span>' +
           '<div class="big">Filed</div>' +
           '<p>' + d.type + ' → <b>' + PACKS[d.pack].name + '</b>' + (d.tag ? ' · ' + d.tag : '') + '<br>It now appears in the pack’s filed documents, and Home has updated.</p>' +
-          '<div class="btnrow"><button class="btn primary" id="done-close">Back to Home</button></div></div>';
+          '<div class="btnrow"><button class="btn primary" id="done-close">Back to Home</button>' +
+          '<button class="linkbtn" id="undo-file" style="align-self:center">Undo — move it back to the Inbox</button></div></div>';
         $('#done-close').addEventListener('click', function(){ closeSheet(); goto('home'); });
+        $('#undo-file').addEventListener('click', function(){
+          d.status = prev.status; d.pack = prev.pack; d.tag = prev.tag; d.folder = prev.folder;
+          renderHome(); renderInbox();
+          if ($('#scr-export').classList.contains('active')) renderExport();
+          closeSheet(); goto('inbox');
+          toast('Undone — ' + d.type + ' is back in your Inbox');
+        });
       }
 
       /* ================= export ================= */
@@ -1103,6 +1207,14 @@
         return { text: lines.join('\n'), docs: docs };
       }
       function renderExport(){
+        $('#export-years').innerHTML = [['prev','2025/26 · filing year'],['cur','2026/27 · collecting year']].map(function(y){
+          return '<button data-eyear="' + y[0] + '" class="' + (state.exportYear === y[0] ? 'on' : '') + '">' + y[1] + '</button>';
+        }).join('');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-eyear]'), function(b){
+          b.addEventListener('click', function(){ state.exportYear = b.getAttribute('data-eyear'); state.exportStage = 'review'; renderExport(); });
+        });
+        if (state.exportYear === 'prev'){ renderExportPrev(); return; }
+        $('#export-pills').style.display = '';
         $('#export-pills').innerHTML = Object.keys(PACKS).map(function(k){
           return '<button data-epack="' + k + '" class="' + (state.exportPack === k ? 'on' : '') + '">' + PACKS[k].name + '</button>';
         }).join('');
@@ -1163,11 +1275,76 @@
         });
       }
 
+      function renderExportPrev(){
+        $('#export-pills').style.display = 'none';
+        $('#export-pills').innerHTML = '';
+        var body = $('#export-body');
+        if (state.exportStage === 'review'){
+          body.innerHTML =
+            '<div class="card" style="margin-top:14px"><h3 style="font-size:15.5px">Step 1 — Missing review · 2025/26</h3>' +
+            '<p style="font-size:13px;color:var(--ink2);line-height:1.5;margin:5px 0 4px">The filing year — the one that ended 5 April 2026, with the 31 January 2027 deadline. It closed complete: everything expected across all three packs was collected.</p>' +
+            '<div class="state-line ok" style="margin-top:4px">' + I.check + '<span>Nothing missing. Everything expected for 2025/26 has been collected.</span></div></div>' +
+            '<div class="warn-banner">' + I.warn + '<span>The exported ZIP is <b>not encrypted</b>. Send it somewhere you trust — AirDrop, Files, or email to your accountant.</span></div>' +
+            '<div class="btnrow"><button class="btn primary" id="export-go-prev">Create export pack — all three packs</button></div>';
+          $('#export-go-prev').addEventListener('click', function(){ state.exportStage = 'preview'; renderExport(); $('#scr-export').scrollTop = 0; });
+          return;
+        }
+        body.innerHTML =
+          '<div class="card" style="margin-top:14px"><h3 style="font-size:15.5px">Step 2 — Your packs · 2025/26</h3>' +
+          '<p class="mono" style="font-size:12.5px;margin:6px 0 10px;word-break:break-all">Log4Tax_2025-26_all-packs.zip</p>' +
+          '<p style="font-size:13px;color:var(--ink2);line-height:1.55;margin:0">Personal, Property — 14 Maple Drive, and Business — sole trader, exactly as collected through 2025/26. In the app, Generate hands the ZIP straight to the share sheet.</p>' +
+          '<div class="nothing-banner">' + I.check + '<span><b>Nothing missing</b> — every expected document for 2025/26 is in.</span></div></div>' +
+          '<div class="btnrow"><button class="btn primary" id="dl-prev">Download pack summary (.txt)</button>' +
+          '<button class="btn edit" id="export-back-prev">Back to Missing review</button></div>';
+        $('#export-back-prev').addEventListener('click', function(){ state.exportStage = 'review'; renderExport(); });
+        $('#dl-prev').addEventListener('click', function(){
+          var txt = 'Log4Tax export — DEMO (sample data, fictional)\nTax year 2025/26 (filing year) · Deadline 31 Jan 2027\nPacks: Personal · Property — 14 Maple Drive · Business — sole trader\nMissing: none — every expected document was collected.\nNote: the real ZIP is unencrypted.\n';
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(new Blob([txt], { type:'text/plain' }));
+          a.download = 'Log4Tax_2025-26_summary.txt';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+          toast('Summary downloaded');
+        });
+      }
+
+      /* ================= find ================= */
+      function findRow(d){
+        return '<div class="docitem sm">' + docThumb(d) +
+          '<span class="di-main"><span class="di-t">' + d.type + '</span><span class="di-s">' + d.supplier + ' · ' + fmtDate(d.date) + ' · ' + PACKS[d.pack].name + (d.tag ? ' · ' + d.tag : '') + '</span></span>' +
+          '<span class="di-amt num">' + (d.amount == null ? '—' : fmt(d.amount)) + '</span></div>';
+      }
+      function renderFind(){
+        $('#find-chips').innerHTML = [['all','All packs'],['personal','Personal'],['property','Property'],['business','Business']].map(function(f){
+          return '<button class="chip' + (state.findPack === f[0] ? ' on' : '') + '" data-findpack="' + f[0] + '">' + f[1] + '</button>';
+        }).join('');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-findpack]'), function(b){
+          b.addEventListener('click', function(){ state.findPack = b.getAttribute('data-findpack'); renderFind(); });
+        });
+        var q = state.findQuery.trim().toLowerCase();
+        var docs = state.docs.filter(function(d){ return d.status === 'filed'; });
+        if (state.findPack !== 'all') docs = docs.filter(function(d){ return d.pack === state.findPack; });
+        if (q) docs = docs.filter(function(d){ return (d.type + ' ' + d.supplier + ' ' + (d.tag || '') + ' ' + PACKS[d.pack].name).toLowerCase().indexOf(q) !== -1; });
+        docs.sort(function(a, b){ return a.date < b.date ? 1 : -1; });
+        var body = $('#find-body');
+        if (!docs.length){
+          body.innerHTML = '<div class="empty"><div class="big">No matches</div><p>Nothing filed matches' + (q ? ' “' + state.findQuery.trim() + '”' : '') + (state.findPack !== 'all' ? ' in ' + PACKS[state.findPack].name : '') + '. Clear the search or pick another pack to see everything.</p></div>';
+          return;
+        }
+        if (!q && state.findPack === 'all'){
+          body.innerHTML = '<h2 class="sec-title">Recently filed</h2>' + docs.slice(0, 3).map(findRow).join('') +
+            '<h2 class="sec-title">All filed · ' + docs.length + '</h2>' + docs.map(findRow).join('');
+          return;
+        }
+        body.innerHTML = '<h2 class="sec-title">' + docs.length + (docs.length === 1 ? ' document' : ' documents') + '</h2>' + docs.map(findRow).join('');
+      }
+
       /* ================= navigation ================= */
       function goto(name){
         Array.prototype.forEach.call(document.querySelectorAll('.screen'), function(s){ s.classList.toggle('active', s.id === 'scr-' + name); });
         Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){ t.classList.toggle('on', t.getAttribute('data-scr') === name); });
         if (name === 'export') renderExport();
+        if (name === 'find') renderFind();
         var scr = $('#scr-' + name); if (scr) scr.scrollTop = 0;
       }
       Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
@@ -1179,10 +1356,12 @@
       $('#capture-btn').addEventListener('click', function(){ goto('add'); });
       $('#scrim').addEventListener('click', closeSheet);
       $('#reset-btn').addEventListener('click', function(){
-        state = { docs: initialDocs(), addedRoutes:{}, exportPack:'property', exportStage:'review', openPacks:{} };
+        state = { docs: initialDocs(), addedRoutes:{}, exportPack:'property', exportYear:'cur', exportStage:'review', openPacks:{}, findQuery:'', findPack:'all' };
+        var fq = $('#find-q'); if (fq) fq.value = '';
         closeSheet(); renderHome(); renderInbox(); renderRoutes(); goto('home');
         toast('Demo reset to its starting state');
       });
+      $('#find-q').addEventListener('input', function(){ state.findQuery = this.value; renderFind(); });
 
       /* ================= boot ================= */
       renderHome(); renderInbox(); renderRoutes();
