@@ -7,37 +7,40 @@
     <link rel="icon" href="data:," />
     <title>Log4Tax MVP Demo</title>
     <style>
+
       :root{
         color-scheme: light dark;
-        --bg:#FFFFFF; --bg2:#F4F5F3; --paper:#FBF7EC;
-        --ink:#17202A; --ink2:#55606C; --ink3:#8A94A0;
-        --accent:#14532D; --accent-tint:#E3F0E7;
-        --received:#1B7A43; --received-tint:#E4F2E9;
-        --expected:#6B7684;
-        --missing:#B45309; --missing-tint:#FBF0DC;
-        --na:#9AA5B1;
-        --violet:#5B4CAD; --violet-tint:#ECE9F8;
-        --danger:#B3261E;
-        --divider:#E2E5E9;
-        --page:#E9EBE7;
-        --phone-edge:#101418;
-        --chip:#EFF1EE;
+        --bg:#F5F5F7; --bg2:#FFFFFF; --paper:#FFFFFF; --card:#FFFFFF;
+        --ink:#1D1D1F; --ink2:#6E6E73; --ink3:#AEAEB2;
+        --accent:#0066CC; --accent-tint:#E9F1FA;
+        --received:#248A3D; --received-tint:#E7F4EB;
+        --expected:#86868B;
+        --missing:#A85B00; --missing-tint:#FBF1DE;
+        --na:#C7C7CC;
+        --violet:#5E4FB8; --violet-tint:#EFEDF9;
+        --danger:#D70015;
+        --divider:#E1E1E6;
+        --page:#E9E9ED;
+        --phone-edge:#141414;
+        --chip:#EFEFF2;
+        --docpage:#FFFFFF;
       }
       @media (prefers-color-scheme: dark){
         :root{
-          --bg:#0E1116; --bg2:#171B21; --paper:#221E14;
-          --ink:#F2F4F6; --ink2:#A7B0BA; --ink3:#6E7885;
-          --accent:#3FA46A; --accent-tint:#16301F;
-          --received:#4CC38A; --received-tint:#14291D;
-          --expected:#9AA5B1;
-          --missing:#F2B25C; --missing-tint:#2E2410;
-          --na:#5C6672;
-          --violet:#A79BEB; --violet-tint:#262040;
-          --danger:#F28B82;
-          --divider:#262C34;
-          --page:#05070A;
-          --phone-edge:#2A3138;
-          --chip:#1D232B;
+          --bg:#000000; --bg2:#1C1C1E; --paper:#1C1C1E; --card:#1C1C1E;
+          --ink:#F5F5F7; --ink2:#A1A1A6; --ink3:#636366;
+          --accent:#409CFF; --accent-tint:#14293F;
+          --received:#30D158; --received-tint:#0E2A17;
+          --expected:#98989F;
+          --missing:#FFB340; --missing-tint:#2E2110;
+          --na:#48484A;
+          --violet:#A79BEB; --violet-tint:#272244;
+          --danger:#FF6961;
+          --divider:#2C2C2E;
+          --page:#101012;
+          --phone-edge:#000000;
+          --chip:#2C2C2E;
+          --docpage:#26262B;
         }
       }
       *{ box-sizing:border-box; }
@@ -55,13 +58,13 @@
         max-width:1180px; margin:0 auto; padding:28px 20px 4px;
         display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px;
       }
-      .page-head h1{ font-size:26px; line-height:1.15; margin:0; letter-spacing:-.01em; }
+      .page-head h1{ font-size:26px; line-height:1.15; margin:0; letter-spacing:-.02em; font-weight:700; }
       .demo-badge{
-        font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-        color:var(--missing); background:var(--missing-tint);
-        border:1px solid var(--missing); border-radius:999px; padding:3px 10px;
+        font-size:11.5px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+        color:var(--ink2); background:transparent;
+        border:1px solid var(--ink3); border-radius:999px; padding:3px 10px;
       }
-      .page-head p{ margin:0; color:var(--ink2); font-size:14px; width:100%; }
+      .page-head p{ margin:0; color:var(--ink2); font-size:14px; width:100%; line-height:1.55; }
       .stage{
         max-width:1180px; margin:0 auto; padding:18px 20px 48px;
         display:grid; grid-template-columns:412px 1fr; gap:44px; align-items:start;
@@ -72,7 +75,7 @@
       .phone{
         width:min(400px,100%); height:min(800px,92vh); min-height:600px;
         background:var(--phone-edge); border-radius:52px; padding:11px;
-        box-shadow:0 24px 60px rgba(10,20,14,.28), 0 4px 14px rgba(10,20,14,.18);
+        box-shadow:0 20px 48px rgba(0,0,0,.22), 0 3px 10px rgba(0,0,0,.14);
         position:relative; flex:none;
       }
       .viewport{
@@ -97,7 +100,7 @@
 
       /* tab bar */
       .tabbar{
-        flex:none; height:64px; border-top:1px solid var(--divider); background:var(--bg);
+        flex:none; height:64px; border-top:1px solid var(--divider); background:var(--card);
         display:grid; grid-template-columns:repeat(4,1fr); padding-bottom:8px;
       }
       .tab{
@@ -109,73 +112,141 @@
       .tab.on{ color:var(--accent); }
       .tab .bdg{
         position:absolute; top:4px; left:calc(50% + 4px); min-width:17px; height:17px; padding:0 4px;
-        border-radius:9px; background:var(--missing); color:#fff; font-size:10.5px; font-weight:700;
+        border-radius:9px; background:var(--accent); color:#fff; font-size:10.5px; font-weight:700;
         display:flex; align-items:center; justify-content:center;
       }
       .tab .bdg.zero{ display:none; }
 
       /* ---------- app chrome ---------- */
       .year-head{ padding:6px 2px 2px; }
-      .year-head .yr{ font-size:29px; font-weight:800; letter-spacing:-.02em; margin:0; }
-      .year-head .sub{ color:var(--ink2); font-size:13px; margin-top:2px; }
+      .year-head .yr{ font-size:24px; font-weight:700; letter-spacing:-.02em; margin:0; }
+      .year-head .sub{ color:var(--ink2); font-size:13px; margin-top:3px; line-height:1.45; }
+      .home-kicker{ font-size:12.5px; font-weight:600; color:var(--ink2); margin:8px 0 0; }
+      .home-title{ font-size:29px; font-weight:700; letter-spacing:-.02em; margin:3px 0 0; }
+      .home-status{ font-size:14.5px; color:var(--ink); line-height:1.5; margin:10px 0 0; max-width:36ch; }
       .demo-strip{
-        margin-top:10px; font-size:11.5px; color:var(--ink2); background:var(--bg2);
-        border:1px dashed var(--divider); border-radius:9px; padding:6px 10px;
+        margin-top:12px; font-size:11.5px; color:var(--ink2); line-height:1.5;
+        border-top:1px solid var(--divider); padding-top:9px;
       }
       .boundary{
-        margin-top:10px; font-size:12.5px; line-height:1.45; color:var(--ink);
-        background:var(--accent-tint); border-radius:10px; padding:9px 12px;
+        margin-top:12px; font-size:12.5px; line-height:1.5; color:var(--ink2);
+        border-top:1px solid var(--divider); padding-top:10px;
       }
-      .boundary b{ color:var(--accent); }
-      .sec-title{ font-size:13px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:20px 2px 9px; }
+      .boundary b{ color:var(--ink); font-weight:600; }
+      .sec-title{ font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--ink2); margin:22px 2px 9px; }
 
-      /* readiness cards */
+      /* ---------- tax-year timeline ---------- */
+      .tl{ margin-top:16px; }
+      .tl-row{ display:grid; grid-template-columns:repeat(12,1fr); position:relative; }
+      .tl-row::before{
+        content:""; position:absolute; left:4%; right:4%; top:19px; height:1.5px; background:var(--divider);
+      }
+      .tl-m{ display:flex; flex-direction:column; align-items:center; gap:5px; padding-top:13px; position:relative; }
+      .tl-today{
+        position:absolute; top:-1px; left:50%; transform:translateX(-50%);
+        font-size:9.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--accent); white-space:nowrap;
+      }
+      .tl-dot{ width:11px; height:11px; border-radius:50%; position:relative; z-index:1; background:var(--bg); }
+      .tl-dot.done{ background:var(--received); border:1.5px solid var(--received); }
+      .tl-dot.missing{ background:var(--bg); border:1.5px solid var(--missing); }
+      .tl-dot.current{ background:var(--bg); border:1.5px solid var(--ink); }
+      .tl-dot.future{ background:var(--bg); border:1.5px solid var(--na); }
+      .tl-lab{ font-size:9.5px; font-weight:600; color:var(--ink3); }
+      .tl-m .tl-dot.current ~ .tl-lab{ color:var(--ink); }
+      .tl-caption{
+        display:flex; justify-content:space-between; gap:10px; margin-top:9px;
+        font-size:11.5px; color:var(--ink2);
+      }
+      .tl-caption .tl-dl{ text-align:right; }
+      .tl-legend{ font-size:11px; color:var(--ink3); margin-top:3px; }
+
+      /* ---------- pack cards ---------- */
       .card{
-        background:var(--bg2); border:1px solid var(--divider); border-radius:12px;
+        background:var(--card); border:1px solid var(--divider); border-radius:12px;
         padding:14px 14px 12px; margin-bottom:12px;
       }
+      .card-head{ cursor:pointer; }
       .card .top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-      .card h3{ margin:0; font-size:16.5px; font-weight:700; }
+      .card h3{ margin:0; font-size:16.5px; font-weight:700; letter-spacing:-.01em; }
       .card .kind{ font-size:12px; color:var(--ink2); margin-top:1px; }
       .pack-tag{
-        font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+        font-size:10.5px; font-weight:600; letter-spacing:.03em; text-transform:uppercase;
         color:var(--ink2); border:1px solid var(--divider); border-radius:999px; padding:2px 8px; white-space:nowrap;
       }
-      .pack-tag.paid{ color:var(--accent); border-color:var(--accent); }
-      .counts{ display:flex; gap:14px; margin-top:11px; flex-wrap:wrap; }
+      .state-line{ margin-top:10px; font-size:14px; font-weight:500; line-height:1.45; display:flex; align-items:flex-start; gap:7px; }
+      .state-line.ok{ color:var(--ink); } .state-line.warn{ color:var(--ink); }
+      .state-line svg{ width:16px; height:16px; flex:none; margin-top:2px; }
+      .state-line.ok svg{ color:var(--received); } .state-line.warn svg{ color:var(--missing); }
+      .next-line{ margin-top:7px; font-size:13px; color:var(--ink2); line-height:1.45; padding-left:23px; }
+      .next-line b{ color:var(--ink); font-weight:600; }
+      .detail-toggle{
+        display:flex; align-items:center; justify-content:space-between; gap:8px;
+        width:100%; background:none; font-family:inherit; text-align:left;
+        margin-top:12px; padding:10px 0 0; border:0; border-top:1px solid var(--divider);
+        font-size:12.5px; font-weight:600; color:var(--accent); cursor:pointer;
+      }
+      .detail-toggle svg{ width:15px; height:15px; transition:transform .2s ease; }
+      .card.open .detail-toggle svg{ transform:rotate(180deg); }
+      .pack-detail{ display:none; }
+      .card.open .pack-detail{ display:block; }
+      .detail-sec{ font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--ink3); margin:14px 0 7px; }
+      .counts{ display:flex; gap:14px; flex-wrap:wrap; }
       .counts .c{ font-size:12.5px; color:var(--ink2); display:flex; align-items:center; gap:5px; }
-      .counts .c b{ font-size:15px; color:var(--ink); }
-      .dot{ width:8px; height:8px; border-radius:50%; flex:none; }
+      .counts .c b{ font-size:14px; color:var(--ink); font-weight:600; }
+      .dot{ width:7px; height:7px; border-radius:50%; flex:none; }
       .dot.r{ background:var(--received); } .dot.e{ background:var(--expected); } .dot.m{ background:var(--missing); } .dot.l{ background:var(--na); }
-      .state-line{ margin-top:9px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; }
-      .state-line.ok{ color:var(--received); } .state-line.warn{ color:var(--missing); }
-      .state-line svg{ width:16px; height:16px; flex:none; }
+      .filed-none{ font-size:13px; color:var(--ink2); margin:0; }
 
       /* month strip */
       .strip-label{ font-size:12px; color:var(--ink2); margin:12px 0 6px; display:flex; justify-content:space-between; }
       .strip{ display:grid; grid-template-columns:repeat(12,1fr); gap:3px; }
       .mcell{
         aspect-ratio:.82; border-radius:5px; display:flex; align-items:center; justify-content:center;
-        font-size:9px; font-weight:700; letter-spacing:.01em;
+        font-size:9px; font-weight:600; letter-spacing:.01em;
       }
       .mcell.got{ background:var(--received); color:#fff; }
-      .mcell.miss{ background:var(--missing-tint); color:var(--missing); border:1.5px solid var(--missing); }
-      .mcell.due{ background:transparent; border:1.5px solid var(--divider); color:var(--ink3); }
-      .mcell.future{ background:transparent; border:1.5px dashed var(--divider); color:var(--ink3); }
+      .mcell.miss{ background:transparent; color:var(--missing); border:1.5px solid var(--missing); }
+      .mcell.due{ background:transparent; border:1.5px solid var(--ink3); color:var(--ink2); }
+      .mcell.future{ background:transparent; border:1.5px solid var(--divider); color:var(--ink3); }
       .strip-legend{ display:flex; gap:12px; flex-wrap:wrap; margin-top:7px; font-size:10.5px; color:var(--ink2); }
       .strip-legend span{ display:flex; align-items:center; gap:4px; }
       .sw{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+
+      /* ---------- the document component ---------- */
+      .docitem{
+        display:flex; gap:11px; align-items:center; width:100%; text-align:left;
+        background:var(--card); border:1px solid var(--divider); border-radius:12px;
+        padding:11px 12px; margin-top:10px; cursor:pointer; font-family:inherit; color:var(--ink);
+      }
+      .docitem.sm{ cursor:default; margin-top:0; border:0; border-bottom:1px solid var(--divider); border-radius:0; padding:9px 2px; background:transparent; }
+      .docitem.sm:last-child{ border-bottom:0; }
+      .docitem:active{ transform:scale(.995); }
+      .docitem.sm:active{ transform:none; }
+      .dthumb{
+        width:42px; height:54px; border-radius:4px; background:var(--docpage); border:1px solid var(--divider);
+        flex:none; display:flex; flex-direction:column; padding:5px 5px 4px; overflow:hidden;
+      }
+      .dthumb.lg{ width:50px; height:64px; }
+      .dthumb .dt-from{ font-size:6.5px; font-weight:700; color:var(--ink); line-height:1.2; white-space:nowrap; overflow:hidden; }
+      .dthumb .dt-lines{ display:flex; flex-direction:column; gap:2.5px; margin-top:4px; }
+      .dthumb .dt-lines i{ display:block; height:2.5px; border-radius:2px; background:var(--divider); }
+      .dthumb .dt-amt{ margin-top:auto; font-size:7px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap; }
+      .di-main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+      .di-t{ font-size:14.5px; font-weight:600; line-height:1.25; }
+      .di-s{ font-size:12.5px; color:var(--ink2); margin-top:2px; line-height:1.4; }
+      .di-amt{ font-size:13.5px; font-weight:600; flex:none; }
+      .di-chev{ font-size:20px; color:var(--ink3); flex:none; line-height:1; }
 
       /* reminders */
       .rem{
         display:flex; gap:11px; padding:11px 2px; border-bottom:1px solid var(--divider); align-items:flex-start;
       }
       .rem:last-child{ border-bottom:0; }
-      .rem .ric{ width:34px; height:34px; border-radius:9px; background:var(--bg2); border:1px solid var(--divider); display:flex; align-items:center; justify-content:center; flex:none; color:var(--ink2); }
+      .rem .ric{ width:34px; height:34px; border-radius:9px; background:var(--card); border:1px solid var(--divider); display:flex; align-items:center; justify-content:center; flex:none; color:var(--ink2); }
       .rem .ric svg{ width:18px; height:18px; }
       .rem .rt{ font-size:14px; font-weight:600; }
       .rem .rs{ font-size:12.5px; color:var(--ink2); margin-top:1px; line-height:1.4; }
-      .pill{ font-size:11px; font-weight:700; border-radius:999px; padding:2px 8px; white-space:nowrap; margin-left:auto; flex:none; }
+      .pill{ font-size:11px; font-weight:600; border-radius:999px; padding:2px 8px; white-space:nowrap; margin-left:auto; flex:none; }
       .pill.ok{ color:var(--received); background:var(--received-tint); }
       .pill.warn{ color:var(--missing); background:var(--missing-tint); }
       .pill.plain{ color:var(--ink2); background:var(--chip); }
@@ -183,71 +254,55 @@
       /* capture button */
       .capture{
         width:100%; border:0; cursor:pointer; border-radius:12px; padding:14px;
-        background:var(--accent); color:#fff; font-size:16px; font-weight:700; font-family:inherit;
+        background:var(--accent); color:#fff; font-size:16px; font-weight:600; font-family:inherit;
         display:flex; align-items:center; justify-content:center; gap:9px; margin-top:16px;
-        box-shadow:0 6px 16px rgba(20,83,45,.28);
       }
       .capture svg{ width:20px; height:20px; }
       .capture:active{ transform:scale(.99); }
 
       /* inbox */
-      .inbox-head{ background:var(--paper); border:1px solid var(--divider); border-radius:12px; padding:13px 14px; margin-top:8px; }
-      .inbox-head h2{ margin:0; font-size:19px; }
-      .inbox-head p{ margin:4px 0 0; font-size:13px; color:var(--ink2); line-height:1.45; }
-      .doc-row{
-        display:flex; gap:11px; align-items:center; background:var(--bg2); border:1px solid var(--divider);
-        border-radius:12px; padding:12px; margin-top:10px; width:100%; text-align:left; cursor:pointer; font-family:inherit; color:var(--ink);
-      }
-      .doc-row:active{ transform:scale(.995); }
-      .thumb{
-        width:42px; height:52px; border-radius:6px; background:var(--bg); border:1px solid var(--divider);
-        flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:var(--ink3);
-      }
-      .thumb svg{ width:19px; height:19px; }
-      .thumb span{ font-size:8px; font-weight:700; letter-spacing:.06em; }
-      .doc-row .dt{ font-size:14.5px; font-weight:700; line-height:1.25; display:block; }
-      .doc-row .ds{ font-size:12.5px; color:var(--ink2); margin-top:2px; line-height:1.4; display:block; }
-      .file-chip{
-        margin-left:auto; flex:none; background:var(--accent); color:#fff; border-radius:999px;
-        font-size:12.5px; font-weight:700; padding:7px 13px;
-      }
-      .empty{ text-align:center; padding:30px 18px; color:var(--ink2); }
+      .inbox-head{ padding:6px 2px 0; }
+      .inbox-head h2{ margin:0; font-size:24px; font-weight:700; letter-spacing:-.02em; }
+      .inbox-head p{ margin:5px 0 0; font-size:13px; color:var(--ink2); line-height:1.5; }
+      .inbox-head p b{ color:var(--ink); font-weight:600; }
+      .empty{ text-align:center; padding:34px 18px; color:var(--ink2); }
       .empty .big{ font-size:17px; font-weight:700; color:var(--ink); margin-bottom:5px; }
       .empty p{ font-size:13.5px; line-height:1.5; margin:0; }
-      .empty svg{ width:34px; height:34px; color:var(--received); margin-bottom:8px; }
+      .empty svg{ width:30px; height:30px; color:var(--received); margin-bottom:8px; }
 
       /* add routes */
       .route{
-        display:flex; gap:12px; align-items:flex-start; background:var(--bg2); border:1px solid var(--divider);
+        display:flex; gap:12px; align-items:flex-start; background:var(--card); border:1px solid var(--divider);
         border-radius:12px; padding:13px 14px; margin-top:10px;
       }
       .route .ric{ width:40px; height:40px; border-radius:10px; background:var(--accent-tint); color:var(--accent); display:flex; align-items:center; justify-content:center; flex:none; }
       .route .ric svg{ width:20px; height:20px; }
-      .route h3{ margin:0; font-size:15px; }
+      .route h3{ margin:0; font-size:15px; font-weight:600; }
       .route p{ margin:3px 0 0; font-size:12.5px; color:var(--ink2); line-height:1.45; }
       .route .sample{ font-size:12px; color:var(--ink); background:var(--bg); border:1px solid var(--divider); border-radius:7px; padding:5px 8px; margin-top:8px; display:inline-block; }
       .route button{
         margin-left:auto; flex:none; align-self:center; border:1.5px solid var(--accent); color:var(--accent);
-        background:transparent; border-radius:999px; font-size:13px; font-weight:700; padding:8px 14px; cursor:pointer; font-family:inherit;
+        background:transparent; border-radius:999px; font-size:13px; font-weight:600; padding:8px 14px; cursor:pointer; font-family:inherit;
       }
       .route button.done{ border-color:var(--received); color:var(--received); background:var(--received-tint); cursor:default; }
 
       /* export */
       .pack-pills{ display:flex; gap:7px; flex-wrap:wrap; margin-top:10px; }
       .pack-pills button{
-        border:1.5px solid var(--divider); background:var(--bg); color:var(--ink); border-radius:999px;
+        border:1.5px solid var(--divider); background:var(--card); color:var(--ink); border-radius:999px;
         padding:8px 13px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
       }
       .pack-pills button.on{ border-color:var(--accent); background:var(--accent-tint); color:var(--accent); }
       .miss-item{ display:flex; gap:9px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--divider); font-size:13.5px; }
       .miss-item:last-child{ border-bottom:0; }
       .miss-item svg{ width:16px; height:16px; color:var(--missing); flex:none; margin-top:1px; }
-      .miss-item .why{ color:var(--ink2); font-size:12.5px; }
+      .miss-item .why{ color:var(--ink2); font-size:12.5px; line-height:1.45; }
       .btn{
-        border:0; border-radius:11px; padding:12px 16px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit;
+        border:0; border-radius:11px; padding:12px 16px; font-size:14.5px; font-weight:600; cursor:pointer; font-family:inherit;
       }
       .btn.primary{ background:var(--accent); color:#fff; width:100%; }
       .btn.ghost{ background:transparent; border:1.5px solid var(--missing); color:var(--missing); width:100%; }
+      .btn.edit{ background:var(--card); border:1.5px solid var(--divider); color:var(--ink); width:100%; }
       .btnrow{ display:flex; flex-direction:column; gap:9px; margin-top:13px; }
       .warn-banner{
         background:var(--missing-tint); color:var(--missing); border-radius:10px; padding:10px 12px;
@@ -264,15 +319,20 @@
       table.index td{ padding:6px; border-bottom:1px solid var(--divider); vertical-align:top; }
       table.index td.amt{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
       .missing-page{
-        border:1.5px dashed var(--missing); border-radius:10px; padding:12px 13px; margin-top:12px; background:var(--bg);
+        border:1.5px dashed var(--missing); border-radius:10px; padding:12px 13px; margin-top:12px; background:var(--card);
       }
-      .missing-page h4{ margin:0 0 4px; font-size:13.5px; color:var(--missing); letter-spacing:.03em; }
+      .missing-page h4{ margin:0 0 4px; font-size:13.5px; color:var(--missing); letter-spacing:.02em; }
       .missing-page ul{ margin:6px 0 0; padding-left:18px; font-size:13px; line-height:1.55; }
+      .nothing-banner{
+        display:flex; gap:9px; align-items:center; margin-top:12px;
+        background:var(--received-tint); color:var(--ink); border-radius:10px; padding:11px 12px; font-size:13.5px; line-height:1.45;
+      }
+      .nothing-banner svg{ width:18px; height:18px; color:var(--received); flex:none; }
 
       /* ---------- triage sheet ---------- */
       .sheet-wrap{ position:absolute; inset:0; z-index:50; display:none; }
       .sheet-wrap.open{ display:block; }
-      .scrim{ position:absolute; inset:0; background:rgba(8,12,10,.45); }
+      .scrim{ position:absolute; inset:0; background:rgba(0,0,0,.4); }
       .sheet{
         position:absolute; left:0; right:0; bottom:0; max-height:94%; overflow-y:auto;
         background:var(--paper); border-radius:18px 18px 0 0; padding:10px 16px 20px;
@@ -281,50 +341,75 @@
       @media (prefers-reduced-motion: reduce){ .sheet{ animation:none; } }
       @keyframes rise{ from{ transform:translateY(24px); opacity:.4; } to{ transform:none; opacity:1; } }
       .grab{ width:38px; height:5px; border-radius:3px; background:var(--divider); margin:2px auto 10px; }
-      .sheet h2{ margin:0; font-size:19px; }
+      .sheet h2{ margin:0; font-size:20px; font-weight:700; letter-spacing:-.01em; }
       .sheet .lead{ font-size:13px; color:var(--ink2); line-height:1.5; margin:5px 0 0; }
       .sheet .confirm-note{
-        margin-top:10px; font-size:12.5px; font-weight:600; color:var(--accent);
-        background:var(--accent-tint); border-radius:9px; padding:8px 11px; line-height:1.45;
+        margin-top:14px; font-size:12.5px; color:var(--ink2); line-height:1.5;
+        border-top:1px solid var(--divider); padding-top:11px;
       }
-      .timer-line{ font-size:12px; color:var(--ink2); margin-top:8px; display:flex; align-items:center; gap:6px; }
-      .timer-line svg{ width:14px; height:14px; }
+      .docpage{
+        background:var(--docpage); border:1px solid var(--divider); border-radius:8px;
+        padding:15px 16px 13px; margin-top:13px;
+        box-shadow:0 4px 14px rgba(0,0,0,.07);
+      }
+      .docpage .dp-from{ font-size:16.5px; font-weight:700; letter-spacing:-.01em; }
+      .docpage .dp-type{ font-size:12.5px; color:var(--ink2); margin-top:1px; }
+      .docpage .dp-lines{ margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+      .docpage .dp-lines i{ display:block; height:6px; border-radius:3px; background:var(--divider); }
+      .docpage .dp-amt{
+        display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+        margin-top:12px; padding-top:10px; border-top:1px solid var(--divider);
+        font-size:12.5px; color:var(--ink2);
+      }
+      .docpage .dp-amt b{ font-size:19px; color:var(--ink); font-variant-numeric:tabular-nums; }
       .field{
         display:flex; justify-content:space-between; align-items:baseline; gap:12px;
         padding:10px 0; border-bottom:1px solid var(--divider);
       }
-      .field .fl{ font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink2); flex:none; }
+      .field .fl{ font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--ink2); flex:none; }
       .field .fv{ font-size:14.5px; font-weight:600; text-align:right; }
       .field .fv small{ display:block; font-weight:500; color:var(--missing); font-size:11.5px; margin-top:2px; }
+      .field .fv.read{ animation:hlfade .9s ease both; border-radius:6px; }
+      @keyframes hlfade{ 0%{ background:var(--accent-tint); box-shadow:0 0 0 5px var(--accent-tint); } 100%{ background:transparent; box-shadow:0 0 0 0 transparent; } }
+      @media (prefers-reduced-motion: reduce){ .field .fv.read{ animation:none; } }
       .field input{
         font:inherit; font-size:14.5px; font-weight:600; text-align:right; width:62%;
         border:1.5px solid var(--accent); border-radius:8px; padding:5px 8px; background:var(--bg); color:var(--ink);
       }
-      .picker-label{ font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink2); margin:15px 0 7px; }
+      .picker-label{ font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--ink2); margin:15px 0 7px; }
       .chips{ display:flex; flex-wrap:wrap; gap:7px; }
       .chip{
-        border:1.5px solid var(--divider); background:var(--bg); color:var(--ink); border-radius:999px;
-        padding:7px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
+        border:1.5px solid var(--divider); background:var(--card); color:var(--ink); border-radius:999px;
+        padding:7px 12px; font-size:13px; font-weight:500; cursor:pointer; font-family:inherit;
       }
-      .chip.on{ border-color:var(--accent); background:var(--accent-tint); color:var(--accent); }
+      .chip.on{ border-color:var(--accent); background:var(--accent-tint); color:var(--accent); font-weight:600; }
       .chip.violet{ border-color:var(--violet); color:var(--violet); }
       .chip.violet.on{ background:var(--violet-tint); border-color:var(--violet); color:var(--violet); }
       .finance-box{
-        margin-top:12px; border:1.5px solid var(--violet); background:var(--violet-tint);
+        margin-top:12px; border:1px solid var(--violet); background:var(--violet-tint);
         border-radius:11px; padding:11px 12px;
       }
-      .finance-box .fh{ font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--violet); display:flex; align-items:center; gap:6px; }
+      .finance-box .fh{ font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--violet); display:flex; align-items:center; gap:6px; }
       .finance-box .fh svg{ width:15px; height:15px; }
       .finance-box p{ font-size:12.5px; line-height:1.5; margin:6px 0 9px; color:var(--ink); }
       .seg{ display:flex; border:1.5px solid var(--divider); border-radius:10px; overflow:hidden; margin-top:8px; }
-      .seg button{ flex:1; border:0; background:var(--bg); padding:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; color:var(--ink2); }
+      .seg button{ flex:1; border:0; background:var(--card); padding:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; color:var(--ink2); }
       .seg button.on{ background:var(--accent); color:#fff; }
-      .hmrc-line{ font-size:12.5px; color:var(--ink2); line-height:1.5; margin-top:7px; font-style:italic; }
-      .btn.edit{ background:var(--bg); border:1.5px solid var(--divider); color:var(--ink); width:100%; }
-      .filed-done{ text-align:center; padding:22px 8px 6px; }
-      .filed-done svg{ width:44px; height:44px; color:var(--received); }
-      .filed-done .big{ font-size:18px; font-weight:800; margin-top:8px; }
-      .filed-done p{ font-size:13.5px; color:var(--ink2); line-height:1.5; margin:6px 0 0; }
+      .hmrc-line{ font-size:12.5px; color:var(--ink2); line-height:1.5; margin-top:7px; }
+      .sheet-actions{ display:flex; justify-content:space-between; gap:10px; }
+      .linkbtn{
+        border:0; background:none; cursor:pointer; font-family:inherit;
+        font-size:14px; font-weight:600; color:var(--accent); padding:8px 4px;
+      }
+      .filed-done{ text-align:center; padding:26px 8px 6px; }
+      .filed-done .done-ic{
+        width:46px; height:46px; border-radius:50%; background:var(--received-tint); color:var(--received);
+        display:inline-flex; align-items:center; justify-content:center;
+      }
+      .filed-done .done-ic svg{ width:24px; height:24px; }
+      .filed-done .big{ font-size:19px; font-weight:700; margin-top:10px; }
+      .filed-done p{ font-size:13.5px; color:var(--ink2); line-height:1.55; margin:6px 0 0; }
+      .filed-done p b{ color:var(--ink); }
 
       /* toast */
       .toast{
@@ -336,28 +421,28 @@
       .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
       /* ---------- guide panel ---------- */
-      .guide h2{ font-size:20px; margin:2px 0 6px; letter-spacing:-.01em; }
+      .guide h2{ font-size:21px; margin:2px 0 6px; letter-spacing:-.02em; font-weight:700; }
       .guide .intro{ color:var(--ink2); font-size:14.5px; line-height:1.6; margin:0 0 18px; max-width:56ch; }
       .step{
         display:flex; gap:13px; padding:13px 14px; border:1px solid var(--divider); border-radius:12px;
-        background:var(--bg); margin-bottom:10px; cursor:pointer; width:100%; text-align:left; font-family:inherit; color:var(--ink);
+        background:var(--card); margin-bottom:10px; cursor:pointer; width:100%; text-align:left; font-family:inherit; color:var(--ink);
       }
       .step:hover{ border-color:var(--accent); }
       .step .n{
         width:27px; height:27px; border-radius:50%; background:var(--accent); color:#fff; flex:none;
-        display:flex; align-items:center; justify-content:center; font-size:13.5px; font-weight:800;
+        display:flex; align-items:center; justify-content:center; font-size:13.5px; font-weight:700;
       }
       .step h3{ margin:1px 0 3px; font-size:15px; }
       .step p{ margin:0; font-size:13px; color:var(--ink2); line-height:1.55; }
       .step p b{ color:var(--ink); }
       .guide .note{
-        font-size:13px; color:var(--ink2); line-height:1.6; background:var(--bg); border:1px solid var(--divider);
+        font-size:13px; color:var(--ink2); line-height:1.6; background:var(--card); border:1px solid var(--divider);
         border-radius:12px; padding:13px 14px; margin-top:16px;
       }
       .guide .note b{ color:var(--ink); }
       .reset-btn{
-        margin-top:12px; border:1.5px solid var(--divider); background:var(--bg); color:var(--ink);
-        border-radius:10px; padding:10px 15px; font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit;
+        margin-top:12px; border:1.5px solid var(--divider); background:var(--card); color:var(--ink);
+        border-radius:10px; padding:10px 15px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit;
       }
       .reset-btn:hover{ border-color:var(--danger); color:var(--danger); }
     </style>
@@ -386,11 +471,13 @@
             <!-- ===== HOME ===== -->
             <section class="screen active" id="scr-home">
               <div class="year-head">
-                <p class="yr">Tax year 2026/27</p>
-                <p class="sub">6 April 2026 – 5 April 2027 · Demo date: 18 October 2026</p>
+                <p class="home-kicker">6 April 2026 – 5 April 2027</p>
+                <h2 class="home-title">Tax year 2026/27</h2>
+                <div id="year-timeline"></div>
+                <p class="home-status" id="home-status">Checking your packs…</p>
               </div>
               <div class="boundary"><b>Collects documents only.</b> Log4Tax does not file your return, calculate tax, or give advice — it keeps the evidence, so January is just handing over a tidy pack.</div>
-              <div class="demo-strip">Sample household: one job, one rental property (“14 Maple Drive”), one sole-trader business. All names and figures are fictional.</div>
+              <div class="demo-strip">Sample household: one job, one rental property (“14 Maple Drive”), one sole-trader business. All names and figures are fictional. Demo date: 18 October 2026.</div>
 
               <h2 class="sec-title">Your packs</h2>
               <div id="pack-cards"></div>
@@ -409,7 +496,7 @@
             <section class="screen" id="scr-inbox">
               <div class="inbox-head">
                 <h2>Inbox</h2>
-                <p>Documents land here first, unfiled. Tap one to triage it — the app reads it <b>on this phone</b> and pre-fills the details. <b>Nothing is ever filed without you confirming it.</b></p>
+                <p>The review tray — the first of three states: <b>to review → filed → still to come</b>. Documents land here exactly as they arrived. Tap one to check what the app read <b>on this phone</b> and file it. <b>Nothing is filed without you confirming it.</b></p>
               </div>
               <div id="inbox-list"></div>
             </section>
@@ -476,13 +563,13 @@
 
         <button class="step" data-goto="home">
           <span class="n">1</span>
-          <span><h3>Readiness at a glance</h3>
-          <p>Three packs — Personal (included), Property and Business (paid add-ons). Each shows <b>Expected · Received · Missing</b>. The Property card’s month strip has <b>August missing</b>; the Business card flags a gap in the invoice sequence — <b>#1042 is missing</b> between #1041 and #1043.</p></span>
+          <span><h3>Position in the year</h3>
+          <p>Home opens on the tax year itself: one timeline, April to April, today marked — solid points are in, hollow ones are still owed, and a single sentence states where you stand. Each pack then gets exactly two things: its state in one line, and the <b>one next action</b>. The <b>Expected · Received · Missing</b> counts, the Property month strip (<b>August missing</b>) and the Business invoice-sequence gap (<b>#1042</b>, between #1041 and #1043) live one tap down, in the pack’s audit view — where the filed documents are also listed, each shown as itself.</p></span>
         </button>
         <button class="step" data-goto="inbox">
           <span class="n">2</span>
-          <span><h3>Inbox triage — the under-10-second filing</h3>
-          <p>A letting-agent statement is waiting. On-device reading has pre-filled its date, amount, supplier and type. Note the <b>violet bucket</b>: residential finance costs sit apart from ordinary expenses, because Section 24 makes mortgage interest a 20% tax credit, not a deduction. Tap <b>File it</b> and watch August fill in on the Home screen.</p></span>
+          <span><h3>Inbox triage — review, confirm, file</h3>
+          <p>A letting-agent statement is waiting in the review tray. Open it and the sheet is deliberately plain: the document itself at the top, the details the app read — date, amount, supplier, type — as a quiet list beneath, each one editable, and a single <b>File</b> button. The app only speaks up when it is unsure: add the repair invoice from the Add tab and one field is flagged as a faint scan. Note the <b>violet bucket</b>: residential finance costs sit apart from ordinary expenses, because Section 24 makes mortgage interest a 20% tax credit, not a deduction. File the statement and August turns solid on the Home timeline.</p></span>
         </button>
         <button class="step" data-goto="add">
           <span class="n">3</span>
@@ -492,7 +579,7 @@
         <button class="step" data-goto="export">
           <span class="n">4</span>
           <span><h3>January export — Missing first</h3>
-          <p>Pick a pack and the export flow shows you the <b>Missing review before anything is generated</b> — gaps are stated, not discovered mid-filing. The pack preview builds its folder tree, <span class="mono">YYYY-MM-DD_type_source_amount</span> filenames, index and explicit Missing page from the live records.</p></span>
+          <p>Pick a pack and the export flow shows you the <b>Missing review before anything is generated</b> — gaps are stated, not discovered mid-filing. The pack preview builds its folder tree, <span class="mono">YYYY-MM-DD_type_source_amount</span> filenames, index and explicit Missing page from the live records. File everything a pack is missing first, and the preview states <b>“Nothing missing”</b> plainly at the top instead.</p></span>
         </button>
         <button class="step" data-goto="home">
           <span class="n">5</span>
@@ -619,7 +706,7 @@
                    detail:'Interest paid in the year — belongs in the violet finance-cost bucket' } }
       ];
 
-      var state = { docs: initialDocs(), addedRoutes: {}, exportPack:'property', exportStage:'review' };
+      var state = { docs: initialDocs(), addedRoutes: {}, exportPack:'property', exportStage:'review', openPacks:{} };
 
       /* ================= helpers ================= */
       function $(s){ return document.querySelector(s); }
@@ -688,6 +775,42 @@
       }
 
       /* ================= render: home ================= */
+      var FULLMONTHS = ['April','May','June','July','August','September','October','November','December','January','February','March'];
+      var CUR_MONTH = 6; /* October 2026 */
+      var PERSONAL_DUE = { 'gift-aid':0, 'pension':0, 'p60':1, 'interest-cert':1, 'broker-cert':2, 'p11d':3 };
+      var CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+
+      /* the one document component — a miniature of the page itself */
+      function docThumb(d, lg){
+        return '<span class="dthumb' + (lg ? ' lg' : '') + '" aria-hidden="true">' +
+          '<span class="dt-from">' + d.supplier.split(' ')[0] + '</span>' +
+          '<span class="dt-lines"><i style="width:88%"></i><i style="width:64%"></i><i style="width:76%"></i></span>' +
+          '<span class="dt-amt">' + (d.amount == null ? '' : fmt(d.amount)) + '</span></span>';
+      }
+      function monthStatus(m){
+        if (m > CUR_MONTH) return 'future';
+        if (m === CUR_MONTH) return 'current';
+        var ok = true;
+        if (!filed('property','agent-statement').some(function(d){ return d.monthIndex === m; })) ok = false;
+        if (!filed('business','bank-statement').some(function(d){ return d.monthIndex === m; })) ok = false;
+        PERSONAL_ITEMS.forEach(function(it){
+          if (PERSONAL_DUE[it.kind] === m){
+            var got = state.docs.some(function(d){ return d.status === 'filed' && d.pack === 'personal' && d.kind === it.kind && (!it.source || d.source === it.source); });
+            if (!got) ok = false;
+          }
+        });
+        return ok ? 'done' : 'missing';
+      }
+      function timelineHTML(){
+        var cells = MONTHS.map(function(name, m){
+          var st = monthStatus(m);
+          var today = m === CUR_MONTH ? '<span class="tl-today">Today</span>' : '';
+          return '<div class="tl-m">' + today + '<span class="tl-dot ' + st + '"></span><span class="tl-lab">' + name + '</span></div>';
+        }).join('');
+        return '<div class="tl"><div class="tl-row">' + cells + '</div>' +
+          '<div class="tl-caption"><span>18 Oct 2026 · month 7 of 12</span><span class="tl-dl">Filing deadline · 31 Jan 2027</span></div>' +
+          '<div class="tl-legend">Solid point — in · hollow point — still owed</div></div>';
+      }
       function countsHTML(r){
         var h = '<div class="counts">' +
           '<span class="c"><span class="dot e"></span>Expected <b class="num">' + r.expected + '</b></span>' +
@@ -705,34 +828,94 @@
         return '<div class="strip-label"><span>Letting agent statements · Apr 2026 – Mar 2027</span></div>' +
                '<div class="strip">' + cells + '</div>' +
                '<div class="strip-legend"><span><span class="sw" style="background:var(--received)"></span>Received</span>' +
-               '<span><span class="sw" style="background:var(--missing-tint);border:1.5px solid var(--missing)"></span>Missing</span>' +
-               '<span><span class="sw" style="border:1.5px solid var(--divider)"></span>This month</span>' +
-               '<span><span class="sw" style="border:1.5px dashed var(--divider)"></span>Not yet due</span></div>';
+               '<span><span class="sw" style="background:transparent;border:1.5px solid var(--missing)"></span>Missing</span>' +
+               '<span><span class="sw" style="border:1.5px solid var(--ink3)"></span>This month</span>' +
+               '<span><span class="sw" style="border:1.5px solid var(--divider)"></span>Not yet due</span></div>';
+      }
+      function nextAction(key){
+        if (key === 'personal'){
+          var r = readiness('personal');
+          if (r.missing > 0) return '<b>Next:</b> ' + r.missingItems[0].label + ' — banks issue these each spring, April to June.';
+          return '<b>Next:</b> nothing outstanding. This year’s certificates arrive again from April 2027.';
+        }
+        if (key === 'property'){
+          var sm = statementMonths('property','agent-statement');
+          if (sm.missing.length){
+            var m = sm.missing[0];
+            var waiting = state.docs.some(function(d){ return d.status === 'inbox' && d.pack === 'property' && d.kind === 'agent-statement' && d.monthIndex === m; });
+            if (waiting) return '<b>Next:</b> file the ' + FULLMONTHS[m] + ' statement — it is waiting in your Inbox.';
+            return '<b>Next:</b> chase the ' + FULLMONTHS[m] + ' statement from Harbourview Lettings.';
+          }
+          return '<b>Next:</b> ' + FULLMONTHS[CUR_MONTH] + ' statement — expected around 5 ' + FULLMONTHS[CUR_MONTH + 1] + ' ' + (CUR_MONTH >= 9 ? '2027' : '2026') + '.';
+        }
+        var g = invoiceGaps();
+        if (g.gaps.length) return '<b>Next:</b> find invoice #' + g.gaps[0] + ' — or note why it was never issued.';
+        var bm = statementMonths('business','bank-statement');
+        if (bm.missing.length) return '<b>Next:</b> chase the ' + FULLMONTHS[bm.missing[0]] + ' bank statement.';
+        return '<b>Next:</b> ' + FULLMONTHS[CUR_MONTH] + ' bank statement — expected early ' + FULLMONTHS[CUR_MONTH + 1] + '.';
+      }
+      function filedListHTML(key){
+        var docs = filed(key).slice().sort(function(a, b){ return a.date < b.date ? -1 : 1; });
+        if (!docs.length) return '<p class="filed-none">Nothing filed yet.</p>';
+        return docs.map(function(d){
+          return '<div class="docitem sm">' + docThumb(d) +
+            '<span class="di-main"><span class="di-t">' + d.type + '</span><span class="di-s">' + d.supplier + ' · ' + fmtDate(d.date) + '</span></span>' +
+            '<span class="di-amt num">' + (d.amount == null ? '—' : fmt(d.amount)) + '</span></div>';
+        }).join('');
       }
       function renderHome(){
+        var totalMissing = ['personal','property','business'].reduce(function(n, k){ return n + readiness(k).missing; }, 0);
+        var hs = $('#home-status');
+        if (hs){
+          hs.textContent = totalMissing === 0
+            ? 'Everything due so far is in, across all three packs. January should be a formality.'
+            : totalMissing === 1
+              ? 'One item due so far is still outstanding — it is named under its pack below.'
+              : totalMissing + ' items due so far are still outstanding — each is named under its pack below.';
+        }
+        var tl = $('#year-timeline'); if (tl) tl.innerHTML = timelineHTML();
         var html = '';
         ['personal','property','business'].forEach(function(key){
           var p = PACKS[key], r = readiness(key);
-          html += '<div class="card"><div class="top"><div><h3>' + p.name + '</h3><div class="kind">' + p.kind + '</div></div>' +
-                  '<span class="pack-tag' + (p.paid ? ' paid' : '') + '">' + (p.paid ? 'Paid pack' : 'Included') + '</span></div>' +
-                  countsHTML(r);
+          var stateLine;
           if (key === 'property'){
-            html += stripHTML();
-            html += r.missing > 0
-              ? '<div class="state-line warn">' + I.warn + '<span>Missing-month alert: the ' + r.missingItems[0].label.replace('Letting agent statement — ','') + ' statement hasn’t arrived. One quiet reminder sent.</span></div>'
+            var waitingInInbox = state.docs.some(function(d){ return d.status === 'inbox' && d.pack === 'property' && d.kind === 'agent-statement'; });
+            stateLine = r.missing > 0
+              ? '<div class="state-line warn">' + I.warn + '<span>' + (waitingInInbox
+                  ? 'The ' + r.missingItems[0].label.replace('Letting agent statement — ','') + ' statement has arrived — it is in your Inbox, not yet filed.'
+                  : 'Missing-month alert: the ' + r.missingItems[0].label.replace('Letting agent statement — ','') + ' statement hasn’t arrived. One quiet reminder sent.') + '</span></div>'
               : '<div class="state-line ok">' + I.check + '<span>Every due statement is in. Nothing to chase.</span></div>';
           } else if (key === 'business'){
-            html += r.gaps.length
+            stateLine = r.gaps.length
               ? '<div class="state-line warn">' + I.warn + '<span>Invoice-sequence gap: #' + r.gaps.join(', #') + ' missing between #' + r.range[0] + ' and #' + r.range[1] + '. Unexplained gaps stay flagged.</span></div>'
               : '<div class="state-line ok">' + I.check + '<span>Invoice sequence complete — #' + r.range[0] + ' to #' + r.range[1] + ', no gaps.</span></div>';
           } else {
-            html += r.missing > 0
+            stateLine = r.missing > 0
               ? '<div class="state-line warn">' + I.warn + '<span>Nearly there — ' + r.missingItems.map(function(i){ return i.label; }).join('; ') + ' still to collect.</span></div>'
               : '<div class="state-line ok">' + I.check + '<span>Complete — everything switched on in your setup has been collected.</span></div>';
           }
-          html += '</div>';
+          var open = !!state.openPacks[key];
+          html += '<div class="card' + (open ? ' open' : '') + '">' +
+                  '<div class="card-head" data-toggle="' + key + '">' +
+                  '<div class="top"><div><h3>' + p.name + '</h3><div class="kind">' + p.kind + '</div></div>' +
+                  '<span class="pack-tag' + (p.paid ? ' paid' : '') + '">' + (p.paid ? 'Paid pack' : 'Included') + '</span></div>' +
+                  stateLine +
+                  '<div class="next-line">' + nextAction(key) + '</div></div>' +
+                  '<button type="button" class="detail-toggle" data-toggle="' + key + '" aria-expanded="' + open + '"><span>' + (open ? 'Hide audit view' : 'Audit view — counts &amp; filed documents') + '</span>' + CHEV + '</button>' +
+                  '<div class="pack-detail">' +
+                    '<div class="detail-sec">Counts</div>' + countsHTML(r) +
+                    (key === 'property' ? stripHTML() : '') +
+                    '<div class="detail-sec">Filed in this pack · ' + filed(key).length + '</div>' + filedListHTML(key) +
+                  '</div></div>';
         });
         $('#pack-cards').innerHTML = html;
+        Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'), function(el){
+          el.addEventListener('click', function(){
+            var k = el.getAttribute('data-toggle');
+            state.openPacks[k] = !state.openPacks[k];
+            renderHome();
+          });
+        });
         renderReminders();
       }
       function renderReminders(){
@@ -757,13 +940,15 @@
         $('#inbox-badge').textContent = docs.length;
         $('#inbox-badge').classList.toggle('zero', docs.length === 0);
         if (!docs.length){
-          $('#inbox-list').innerHTML = '<div class="empty">' + I.check + '<div class="big">Inbox zero</div><p>Everything captured has been filed. Add another sample document from the Add tab to keep exploring.</p></div>';
+          $('#inbox-list').innerHTML = '<div class="empty">' + I.check + '<div class="big">Nothing waiting</div><p>Everything captured has been filed — the tray is empty, which is the point. Add another sample document from the Add tab to keep exploring.</p></div>';
           return;
         }
         $('#inbox-list').innerHTML = docs.map(function(d){
-          return '<button class="doc-row" data-file="' + d.id + '"><span class="thumb">' + I.doc + '<span>PDF</span></span>' +
-            '<span><span class="dt">' + d.type + '</span><span class="ds">' + d.supplier + ' · ' + fmtDate(d.date) + ' · <span class="num">' + fmt(d.amount) + '</span><br>Arrived via ' + d.via + ' · read on-device, ready to confirm</span></span>' +
-            '<span class="file-chip">File</span></button>';
+          return '<button class="docitem" data-file="' + d.id + '">' + docThumb(d, true) +
+            '<span class="di-main"><span class="di-t">' + d.type + '</span>' +
+            '<span class="di-s">' + d.supplier + ' · ' + fmtDate(d.date) + ' · <span class="num">' + fmt(d.amount) + '</span></span>' +
+            '<span class="di-s">Arrived via ' + d.via + ' · to review</span></span>' +
+            '<span class="di-chev" aria-hidden="true">›</span></button>';
         }).join('');
         Array.prototype.forEach.call(document.querySelectorAll('[data-file]'), function(b){
           b.addEventListener('click', function(){ openTriage(parseInt(b.getAttribute('data-file'), 10)); });
@@ -805,7 +990,8 @@
       }
       function fieldRow(label, value, lowConf){
         if (triage.editing) return '<div class="field"><span class="fl">' + label + '</span><input data-field="' + label + '" value="' + String(value).replace(/"/g,'&quot;') + '"></div>';
-        return '<div class="field"><span class="fl">' + label + '</span><span class="fv">' + value + (lowConf ? '<small>Check this one — the scan was faint here</small>' : '') + '</span></div>';
+        var cls = triage.revealed ? '' : ' read';
+        return '<div class="field"><span class="fl">' + label + '</span><span class="fv' + cls + '">' + value + (lowConf ? '<small>Check this one — the scan was faint here</small>' : '') + '</span></div>';
       }
       function renderSheet(){
         var d = triage.doc;
@@ -826,31 +1012,32 @@
             '<button data-repair="Improvement" class="' + (triage.repair === 'Improvement' ? 'on' : '') + '">Improvement</button></div>' +
             '<p class="hmrc-line">HMRC’s line: a repair restores something to its original condition; an improvement makes it better than it was. Improvements go to the capital packet, not the expense list. The choice is always yours — the app never decides.</p>';
         }
+        var preview = '<div class="docpage">' +
+          '<div class="dp-from">' + d.supplier + '</div>' +
+          '<div class="dp-type">' + d.type + ' · ' + fmtDate(d.date) + '</div>' +
+          '<div class="dp-lines"><i style="width:92%"></i><i style="width:74%"></i><i style="width:84%"></i><i style="width:58%"></i></div>' +
+          '<div class="dp-amt"><span>Total amount</span><b>' + (d.amount == null ? '—' : fmt(d.amount)) + '</b></div></div>';
         $('#sheet-body').innerHTML =
-          '<h2>File this document</h2>' +
-          '<p class="lead">' + d.type + ' · arrived via ' + d.via + '. Read on this phone — no copy left the device.</p>' +
-          '<div class="confirm-note">Nothing is filed until you tap “File it”. Check the details the app read, correct anything wrong, then confirm.</div>' +
-          '<div class="timer-line">' + I.clock + '<span>Triaging… target: under 10 seconds. <span class="num" id="triage-timer">0.0s</span></span></div>' +
+          '<h2>' + d.type + '</h2>' +
+          '<p class="lead">Arrived via ' + d.via + ' · read on this phone — no copy left the device.</p>' +
+          preview +
           fieldRow('Date', fmtDate(d.date)) +
           fieldRow('Total amount', d.amount == null ? 'No amount on this document' : fmt(d.amount), d.lowConf === 'amount') +
           fieldRow('Supplier / source', d.supplier) +
           fieldRow('Document type', d.type) +
-          (d.detail ? '<div class="field"><span class="fl">Read from page</span><span class="fv" style="font-weight:500;font-size:13px;color:var(--ink2)">' + d.detail + '</span></div>' : '') +
+          (d.detail ? '<div class="field"><span class="fl">Read from page</span><span class="fv' + (triage.revealed ? '' : ' read') + '" style="font-weight:500;font-size:13px;color:var(--ink2)">' + d.detail + '</span></div>' : '') +
           '<div class="picker-label">File into pack</div><div class="chips">' +
             Object.keys(PACKS).map(function(k){ return '<button class="chip' + (triage.pack === k ? ' on' : '') + '" data-pack="' + k + '">' + PACKS[k].name + '</button>'; }).join('') +
           '</div>' +
           '<div class="picker-label">Category — the app suggests, you decide</div><div class="chips">' + chips + '</div>' +
           finance + repair +
+          '<p class="confirm-note">Nothing is filed until you tap File. Check the details the app read, correct anything wrong, then confirm.</p>' +
           '<div class="btnrow">' +
-            '<button class="btn primary" id="file-it">File it</button>' +
-            '<button class="btn edit" id="edit-fields">' + (triage.editing ? 'Done editing' : 'Edit fields') + '</button>' +
-            '<button class="btn edit" id="cancel-sheet" style="border:0">Not now</button>' +
+            '<button class="btn primary" id="file-it">File</button>' +
+            '<div class="sheet-actions"><button class="linkbtn" id="edit-fields">' + (triage.editing ? 'Done editing' : 'Edit fields') + '</button>' +
+            '<button class="linkbtn" id="cancel-sheet">Not now</button></div>' +
           '</div>';
-        if (triage._tick) clearInterval(triage._tick);
-        triage._tick = setInterval(function(){
-          var el = $('#triage-timer'); if (!el){ return; }
-          el.textContent = ((Date.now() - triage.started) / 1000).toFixed(1) + 's';
-        }, 100);
+        triage.revealed = true;
         bindSheet();
       }
       function bindSheet(){
@@ -889,9 +1076,9 @@
         if (d.kind === 'repair-invoice') d.folder = (triage.repair === 'Improvement') ? 'Capital packet' : (d.tag || d.folder);
         renderHome(); renderInbox();
         if ($('#scr-export').classList.contains('active')) renderExport();
-        $('#sheet-body').innerHTML = '<div class="filed-done">' + I.check +
+        $('#sheet-body').innerHTML = '<div class="filed-done"><span class="done-ic">' + I.check + '</span>' +
           '<div class="big">Filed</div>' +
-          '<p>' + d.type + ' → <b>' + PACKS[d.pack].name + '</b>' + (d.tag ? ' · ' + d.tag : '') + '<br>Filed in <span class="num">' + secs + 's</span>' + (parseFloat(secs) < 10 ? ' — inside the 10-second target.' : '.') + '<br>Home and the month strip have updated.</p>' +
+          '<p>' + d.type + ' → <b>' + PACKS[d.pack].name + '</b>' + (d.tag ? ' · ' + d.tag : '') + '<br>It now appears in the pack’s filed documents, and Home has updated.</p>' +
           '<div class="btnrow"><button class="btn primary" id="done-close">Back to Home</button></div></div>';
         $('#done-close').addEventListener('click', function(){ closeSheet(); goto('home'); });
       }
@@ -950,10 +1137,11 @@
         var missPage = r.missingItems.length
           ? '<div class="missing-page"><h4>MISSING.pdf — page 1 of the index</h4><div style="font-size:13px">Expected but not collected for 2026/27:</div><ul>' + r.missingItems.map(function(i){ return '<li>' + i.label + '</li>'; }).join('') + '</ul></div>'
           : '<div class="missing-page" style="border-color:var(--received)"><h4 style="color:var(--received)">MISSING.pdf — nothing missing</h4><div style="font-size:13px">The Missing page is still included, and says so. A stated “none” beats a silent gap.</div></div>';
+        var stampHTML = r.missingItems.length ? '' : '<div class="nothing-banner">' + I.check + '<span><b>Nothing missing</b> — every expected document for this pack is in.</span></div>';
         body.innerHTML =
           '<div class="card" style="margin-top:14px"><h3 style="font-size:15.5px">Step 2 — Your pack</h3>' +
           '<p class="mono" style="font-size:12.5px;margin:6px 0 10px;word-break:break-all">Log4Tax_' + PACKS[pack].name.replace(/[^A-Za-z0-9]+/g,'-') + '_2026-27.zip</p>' +
-          '<div class="tree mono">' + treeHTML + '</div></div>' +
+          '<div class="tree mono">' + treeHTML + '</div>' + stampHTML + '</div>' +
           '<div class="card"><h3 style="font-size:15.5px">Index — index.pdf + index.csv</h3>' +
           '<p style="font-size:12.5px;color:var(--ink2);margin:4px 0 6px;line-height:1.5">Every document, listed once: type, date, amount and tag. An inventory of what was collected — never a set of tax figures.</p>' +
           '<table class="index"><tr><th>Type</th><th>Date</th><th style="text-align:right">Amount</th><th>Tag</th></tr>' + rows + '</table></div>' +
@@ -991,7 +1179,7 @@
       $('#capture-btn').addEventListener('click', function(){ goto('add'); });
       $('#scrim').addEventListener('click', closeSheet);
       $('#reset-btn').addEventListener('click', function(){
-        state = { docs: initialDocs(), addedRoutes:{}, exportPack:'property', exportStage:'review' };
+        state = { docs: initialDocs(), addedRoutes:{}, exportPack:'property', exportStage:'review', openPacks:{} };
         closeSheet(); renderHome(); renderInbox(); renderRoutes(); goto('home');
         toast('Demo reset to its starting state');
       });
