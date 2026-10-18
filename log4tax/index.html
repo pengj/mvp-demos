@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Log4Tax MVP Demo</title>
+    <style>
+      :root{
+        color-scheme: light dark;
+        --bg:#FFFFFF; --bg2:#F4F5F3; --paper:#FBF7EC;
+        --ink:#17202A; --ink2:#55606C; --ink3:#8A94A0;
+        --accent:#14532D; --accent-tint:#E3F0E7;
+        --received:#1B7A43; --received-tint:#E4F2E9;
+        --expected:#6B7684;
+        --missing:#B45309; --missing-tint:#FBF0DC;
+        --na:#9AA5B1;
+        --violet:#5B4CAD; --violet-tint:#ECE9F8;
+        --danger:#B3261E;
+        --divider:#E2E5E9;
+        --page:#E9EBE7;
+        --phone-edge:#101418;
+        --chip:#EFF1EE;
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#0E1116; --bg2:#171B21; --paper:#221E14;
+          --ink:#F2F4F6; --ink2:#A7B0BA; --ink3:#6E7885;
+          --accent:#3FA46A; --accent-tint:#16301F;
+          --received:#4CC38A; --received-tint:#14291D;
+          --expected:#9AA5B1;
+          --missing:#F2B25C; --missing-tint:#2E2410;
+          --na:#5C6672;
+          --violet:#A79BEB; --violet-tint:#262040;
+          --danger:#F28B82;
+          --divider:#262C34;
+          --page:#05070A;
+          --phone-edge:#2A3138;
+          --chip:#1D232B;
+        }
+      }
+      *{ box-sizing:border-box; }
+      html,body{ margin:0; padding:0; }
+      body{
+        font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+        background:var(--page); color:var(--ink);
+        -webkit-font-smoothing:antialiased;
+      }
+      .num{ font-variant-numeric:tabular-nums; }
+      .mono{ font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+
+      /* ---------- page layout ---------- */
+      .page-head{
+        max-width:1180px; margin:0 auto; padding:28px 20px 4px;
+        display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px;
+      }
+      .page-head h1{ font-size:26px; line-height:1.15; margin:0; letter-spacing:-.01em; }
+      .demo-badge{
+        font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+        color:var(--missing); background:var(--missing-tint);
+        border:1px solid var(--missing); border-radius:999px; padding:3px 10px;
+      }
+      .page-head p{ margin:0; color:var(--ink2); font-size:14px; width:100%; }
+      .stage{
+        max-width:1180px; margin:0 auto; padding:18px 20px 48px;
+        display:grid; grid-template-columns:412px 1fr; gap:44px; align-items:start;
+      }
+      @media (max-width:900px){ .stage{ grid-template-columns:1fr; gap:28px; justify-items:center; } .guide{ max-width:560px; } }
+
+      /* ---------- phone frame ---------- */
+      .phone{
+        width:min(400px,100%); height:min(800px,92vh); min-height:600px;
+        background:var(--phone-edge); border-radius:52px; padding:11px;
+        box-shadow:0 24px 60px rgba(10,20,14,.28), 0 4px 14px rgba(10,20,14,.18);
+        position:relative; flex:none;
+      }
+      .viewport{
+        position:relative; height:100%; border-radius:42px; overflow:hidden; background:var(--bg);
+        display:flex; flex-direction:column;
+      }
+      .notch{
+        position:absolute; top:9px; left:50%; transform:translateX(-50%);
+        width:104px; height:26px; border-radius:14px; background:var(--phone-edge); z-index:60;
+      }
+      .statusbar{
+        height:44px; flex:none; display:flex; align-items:flex-end; justify-content:space-between;
+        padding:0 26px 4px; font-size:13px; font-weight:600;
+      }
+      .statusbar .sicons{ display:flex; gap:6px; align-items:center; color:var(--ink); }
+      .screens{ position:relative; flex:1; overflow:hidden; }
+      .screen{
+        position:absolute; inset:0; overflow-y:auto; padding:6px 16px 18px;
+        display:none; scrollbar-width:thin;
+      }
+      .screen.active{ display:block; }
+
+      /* tab bar */
+      .tabbar{
+        flex:none; height:64px; border-top:1px solid var(--divider); background:var(--bg);
+        display:grid; grid-template-columns:repeat(4,1fr); padding-bottom:8px;
+      }
+      .tab{
+        border:0; background:none; cursor:pointer; color:var(--ink3);
+        display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+        font-size:10.5px; font-weight:600; position:relative; font-family:inherit;
+      }
+      .tab svg{ width:23px; height:23px; }
+      .tab.on{ color:var(--accent); }
+      .tab .bdg{
+        position:absolute; top:4px; left:calc(50% + 4px); min-width:17px; height:17px; padding:0 4px;
+        border-radius:9px; background:var(--missing); color:#fff; font-size:10.5px; font-weight:700;
+        display:flex; align-items:center; justify-content:center;
+      }
+      .tab .bdg.zero{ display:none; }
+
+      /* ---------- app chrome ---------- */
+      .year-head{ padding:6px 2px 2px; }
+      .year-head .yr{ font-size:29px; font-weight:800; letter-spacing:-.02em; margin:0; }
+      .year-head .sub{ color:var(--ink2); font-size:13px; margin-top:2px; }
+      .demo-strip{
+        margin-top:10px; font-size:11.5px; color:var(--ink2); background:var(--bg2);
+        border:1px dashed var(--divider); border-radius:9px; padding:6px 10px;
+      }
+      .boundary{
+        margin-top:10px; font-size:12.5px; line-height:1.45; color:var(--ink);
+        background:var(--accent-tint); border-radius:10px; padding:9px 12px;
+      }
+      .boundary b{ color:var(--accent); }
+      .sec-title{ font-size:13px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:20px 2px 9px; }
+
+      /* readiness cards */
+      .card{
+        background:var(--bg2); border:1px solid var(--divider); border-radius:12px;
+        padding:14px 14px 12px; margin-bottom:12px;
+      }
+      .card .top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+      .card h3{ margin:0; font-size:16.5px; font-weight:700; }
+      .card .kind{ font-size:12px; color:var(--ink2); margin-top:1px; }
+      .pack-tag{
+        font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+        color:var(--ink2); border:1px solid var(--divider); border-radius:999px; padding:2px 8px; white-space:nowrap;
+      }
+      .pack-tag.paid{ color:var(--accent); border-color:var(--accent); }
+      .counts{ display:flex; gap:14px; margin-top:11px; flex-wrap:wrap; }
+      .counts .c{ font-size:12.5px; color:var(--ink2); display:flex; align-items:center; gap:5px; }
+      .counts .c b{ font-size:15px; color:var(--ink); }
+      .dot{ width:8px; height:8px; border-radius:50%; flex:none; }
+      .dot.r{ background:var(--received); } .dot.e{ background:var(--expected); } .dot.m{ background:var(--missing); } .dot.l{ background:var(--na); }
+      .state-line{ margin-top:9px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px; }
+      .state-line.ok{ color:var(--received); } .state-line.warn{ color:var(--missing); }
+      .state-line svg{ width:16px; height:16px; flex:none; }
+
+      /* month strip */
+      .strip-label{ font-size:12px; color:var(--ink2); margin:12px 0 6px; display:flex; justify-content:space-between; }
+      .strip{ display:grid; grid-template-columns:repeat(12,1fr); gap:3px; }
+      .mcell{
+        aspect-ratio:.82; border-radius:5px; display:flex; align-items:center; justify-content:center;
+        font-size:9px; font-weight:700; letter-spacing:.01em;
+      }
+      .mcell.got{ background:var(--received); color:#fff; }
+      .mcell.miss{ background:var(--missing-tint); color:var(--missing); border:1.5px solid var(--missing); }
+      .mcell.due{ background:transparent; border:1.5px solid var(--divider); color:var(--ink3); }
+      .mcell.future{ background:transparent; border:1.5px dashed var(--divider); color:var(--ink3); }
+      .strip-legend{ display:flex; gap:12px; flex-wrap:wrap; margin-top:7px; font-size:10.5px; color:var(--ink2); }
+      .strip-legend span{ display:flex; align-items:center; gap:4px; }
+      .sw{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+
+      /* reminders */
+      .rem{
+        display:flex; gap:11px; padding:11px 2px; border-bottom:1px solid var(--divider); align-items:flex-start;
+      }
+      .rem:last-child{ border-bottom:0; }
+      .rem .ric{ width:34px; height:34px; border-radius:9px; background:var(--bg2); border:1px solid var(--divider); display:flex; align-items:center; justify-content:center; flex:none; color:var(--ink2); }
+      .rem .ric svg{ width:18px; height:18px; }
+      .rem .rt{ font-size:14px; font-weight:600; }
+      .rem .rs{ font-size:12.5px; color:var(--ink2); margin-top:1px; line-height:1.4; }
+      .pill{ font-size:11px; font-weight:700; border-radius:999px; padding:2px 8px; white-space:nowrap; margin-left:auto; flex:none; }
+      .pill.ok{ color:var(--received); background:var(--received-tint); }
+      .pill.warn{ color:var(--missing); background:var(--missing-tint); }
+      .pill.plain{ color:var(--ink2); background:var(--chip); }
+
+      /* capture button */
+      .capture{
+        width:100%; border:0; cursor:pointer; border-radius:12px; padding:14px;
+        background:var(--accent); color:#fff; font-size:16px; font-weight:700; font-family:inherit;
+        display:flex; align-items:center; justify-content:center; gap:9px; margin-top:16px;
+        box-shadow:0 6px 16px rgba(20,83,45,.28);
+      }
+      .capture svg{ width:20px; height:20px; }
+      .capture:active{ transform:scale(.99); }
+
+      /* inbox */
+      .inbox-head{ background:var(--paper); border:1px solid var(--divider); border-radius:12px; padding:13px 14px; margin-top:8px; }
+      .inbox-head h2{ margin:0; font-size:19px; }
+      .inbox-head p{ margin:4px 0 0; font-size:13px; color:var(--ink2); line-height:1.45; }
+      .doc-row{
+        display:flex; gap:11px; align-items:center; background:var(--bg2); border:1px solid var(--divider);
+        border-radius:12px; padding:12px; margin-top:10px; width:100%; text-align:left; cursor:pointer; font-family:inherit; color:var(--ink);
+      }
+      .doc-row:active{ transform:scale(.995); }
+      .thumb{
+        width:42px; height:52px; border-radius:6px; background:var(--bg); border:1px solid var(--divider);
+        flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:var(--ink3);
+      }
+      .thumb svg{ width:19px; height:19px; }
+      .thumb span{ font-size:8px; font-weight:700; letter-spacing:.06em; }
+      .doc-row .dt{ font-size:14.5px; font-weight:700; line-height:1.25; display:block; }
+      .doc-row .ds{ font-size:12.5px; color:var(--ink2); margin-top:2px; line-height:1.4; display:block; }
+      .file-chip{
+        margin-left:auto; flex:none; background:var(--accent); color:#fff; border-radius:999px;
+        font-size:12.5px; font-weight:700; padding:7px 13px;
+      }
+      .empty{ text-align:center; padding:30px 18px; color:var(--ink2); }
+      .empty .big{ font-size:17px; font-weight:700; color:var(--ink); margin-bottom:5px; }
+      .empty p{ font-size:13.5px; line-height:1.5; margin:0; }
+      .empty svg{ width:34px; height:34px; color:var(--received); margin-bottom:8px; }
+
+      /* add routes */
+      .route{
+        display:flex; gap:12px; align-items:flex-start; background:var(--bg2); border:1px solid var(--divider);
+        border-radius:12px; padding:13px 14px; margin-top:10px;
+      }
+      .route .ric{ width:40px; height:40px; border-radius:10px; background:var(--accent-tint); color:var(--accent); display:flex; align-items:center; justify-content:center; flex:none; }
+      .route .ric svg{ width:20px; height:20px; }
+      .route h3{ margin:0; font-size:15px; }
+      .route p{ margin:3px 0 0; font-size:12.5px; color:var(--ink2); line-height:1.45; }
+      .route .sample{ font-size:12px; color:var(--ink); background:var(--bg); border:1px solid var(--divider); border-radius:7px; padding:5px 8px; margin-top:8px; display:inline-block; }
+      .route button{
+        margin-left:auto; flex:none; align-self:center; border:1.5px solid var(--accent); color:var(--accent);
+        background:transparent; border-radius:999px; font-size:13px; font-weight:700; padding:8px 14px; cursor:pointer; font-family:inherit;
+      }
+      .route button.done{ border-color:var(--received); color:var(--received); background:var(--received-tint); cursor:default; }
+
+      /* export */
+      .pack-pills{ display:flex; gap:7px; flex-wrap:wrap; margin-top:10px; }
+      .pack-pills button{
+        border:1.5px solid var(--divider); background:var(--bg); color:var(--ink); border-radius:999px;
+        padding:8px 13px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
+      }
+      .pack-pills button.on{ border-color:var(--accent); background:var(--accent-tint); color:var(--accent); }
+      .miss-item{ display:flex; gap:9px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--divider); font-size:13.5px; }
+      .miss-item:last-child{ border-bottom:0; }
+      .miss-item svg{ width:16px; height:16px; color:var(--missing); flex:none; margin-top:1px; }
+      .miss-item .why{ color:var(--ink2); font-size:12.5px; }
+      .btn{
+        border:0; border-radius:11px; padding:12px 16px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit;
+      }
+      .btn.primary{ background:var(--accent); color:#fff; width:100%; }
+      .btn.ghost{ background:transparent; border:1.5px solid var(--missing); color:var(--missing); width:100%; }
+      .btnrow{ display:flex; flex-direction:column; gap:9px; margin-top:13px; }
+      .warn-banner{
+        background:var(--missing-tint); color:var(--missing); border-radius:10px; padding:10px 12px;
+        font-size:13px; line-height:1.45; display:flex; gap:9px; margin-top:12px;
+      }
+      .warn-banner svg{ width:17px; height:17px; flex:none; margin-top:1px; }
+      .tree{
+        background:var(--bg); border:1px solid var(--divider); border-radius:10px; padding:12px 13px;
+        font-size:11.5px; line-height:1.65; overflow-x:auto; white-space:pre; color:var(--ink);
+      }
+      .tree .violet{ color:var(--violet); font-weight:700; }
+      table.index{ width:100%; border-collapse:collapse; font-size:12px; margin-top:4px; }
+      table.index th{ text-align:left; color:var(--ink2); font-weight:600; padding:5px 6px; border-bottom:1.5px solid var(--divider); font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+      table.index td{ padding:6px; border-bottom:1px solid var(--divider); vertical-align:top; }
+      table.index td.amt{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+      .missing-page{
+        border:1.5px dashed var(--missing); border-radius:10px; padding:12px 13px; margin-top:12px; background:var(--bg);
+      }
+      .missing-page h4{ margin:0 0 4px; font-size:13.5px; color:var(--missing); letter-spacing:.03em; }
+      .missing-page ul{ margin:6px 0 0; padding-left:18px; font-size:13px; line-height:1.55; }
+
+      /* ---------- triage sheet ---------- */
+      .sheet-wrap{ position:absolute; inset:0; z-index:50; display:none; }
+      .sheet-wrap.open{ display:block; }
+      .scrim{ position:absolute; inset:0; background:rgba(8,12,10,.45); }
+      .sheet{
+        position:absolute; left:0; right:0; bottom:0; max-height:94%; overflow-y:auto;
+        background:var(--paper); border-radius:18px 18px 0 0; padding:10px 16px 20px;
+        animation:rise .28s ease;
+      }
+      @media (prefers-reduced-motion: reduce){ .sheet{ animation:none; } }
+      @keyframes rise{ from{ transform:translateY(24px); opacity:.4; } to{ transform:none; opacity:1; } }
+      .grab{ width:38px; height:5px; border-radius:3px; background:var(--divider); margin:2px auto 10px; }
+      .sheet h2{ margin:0; font-size:19px; }
+      .sheet .lead{ font-size:13px; color:var(--ink2); line-height:1.5; margin:5px 0 0; }
+      .sheet .confirm-note{
+        margin-top:10px; font-size:12.5px; font-weight:600; color:var(--accent);
+        background:var(--accent-tint); border-radius:9px; padding:8px 11px; line-height:1.45;
+      }
+      .timer-line{ font-size:12px; color:var(--ink2); margin-top:8px; display:flex; align-items:center; gap:6px; }
+      .timer-line svg{ width:14px; height:14px; }
+      .field{
+        display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+        padding:10px 0; border-bottom:1px solid var(--divider);
+      }
+      .field .fl{ font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink2); flex:none; }
+      .field .fv{ font-size:14.5px; font-weight:600; text-align:right; }
+      .field .fv small{ display:block; font-weight:500; color:var(--missing); font-size:11.5px; margin-top:2px; }
+      .field input{
+        font:inherit; font-size:14.5px; font-weight:600; text-align:right; width:62%;
+        border:1.5px solid var(--accent); border-radius:8px; padding:5px 8px; background:var(--bg); color:var(--ink);
+      }
+      .picker-label{ font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink2); margin:15px 0 7px; }
+      .chips{ display:flex; flex-wrap:wrap; gap:7px; }
+      .chip{
+        border:1.5px solid var(--divider); background:var(--bg); color:var(--ink); border-radius:999px;
+        padding:7px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
+      }
+      .chip.on{ border-color:var(--accent); background:var(--accent-tint); color:var(--accent); }
+      .chip.violet{ border-color:var(--violet); color:var(--violet); }
+      .chip.violet.on{ background:var(--violet-tint); border-color:var(--violet); color:var(--violet); }
+      .finance-box{
+        margin-top:12px; border:1.5px solid var(--violet); background:var(--violet-tint);
+        border-radius:11px; padding:11px 12px;
+      }
+      .finance-box .fh{ font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--violet); display:flex; align-items:center; gap:6px; }
+      .finance-box .fh svg{ width:15px; height:15px; }
+      .finance-box p{ font-size:12.5px; line-height:1.5; margin:6px 0 9px; color:var(--ink); }
+      .seg{ display:flex; border:1.5px solid var(--divider); border-radius:10px; overflow:hidden; margin-top:8px; }
+      .seg button{ flex:1; border:0; background:var(--bg); padding:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; color:var(--ink2); }
+      .seg button.on{ background:var(--accent); color:#fff; }
+      .hmrc-line{ font-size:12.5px; color:var(--ink2); line-height:1.5; margin-top:7px; font-style:italic; }
+      .btn.edit{ background:var(--bg); border:1.5px solid var(--divider); color:var(--ink); width:100%; }
+      .filed-done{ text-align:center; padding:22px 8px 6px; }
+      .filed-done svg{ width:44px; height:44px; color:var(--received); }
+      .filed-done .big{ font-size:18px; font-weight:800; margin-top:8px; }
+      .filed-done p{ font-size:13.5px; color:var(--ink2); line-height:1.5; margin:6px 0 0; }
+
+      /* toast */
+      .toast{
+        position:absolute; top:52px; left:50%; transform:translateX(-50%) translateY(-8px);
+        background:var(--ink); color:var(--bg); font-size:13px; font-weight:600; border-radius:999px;
+        padding:9px 16px; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:70;
+        max-width:88%; text-align:center; box-shadow:0 8px 22px rgba(0,0,0,.25);
+      }
+      .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+      /* ---------- guide panel ---------- */
+      .guide h2{ font-size:20px; margin:2px 0 6px; letter-spacing:-.01em; }
+      .guide .intro{ color:var(--ink2); font-size:14.5px; line-height:1.6; margin:0 0 18px; max-width:56ch; }
+      .step{
+        display:flex; gap:13px; padding:13px 14px; border:1px solid var(--divider); border-radius:12px;
+        background:var(--bg); margin-bottom:10px; cursor:pointer; width:100%; text-align:left; font-family:inherit; color:var(--ink);
+      }
+      .step:hover{ border-color:var(--accent); }
+      .step .n{
+        width:27px; height:27px; border-radius:50%; background:var(--accent); color:#fff; flex:none;
+        display:flex; align-items:center; justify-content:center; font-size:13.5px; font-weight:800;
+      }
+      .step h3{ margin:1px 0 3px; font-size:15px; }
+      .step p{ margin:0; font-size:13px; color:var(--ink2); line-height:1.55; }
+      .step p b{ color:var(--ink); }
+      .guide .note{
+        font-size:13px; color:var(--ink2); line-height:1.6; background:var(--bg); border:1px solid var(--divider);
+        border-radius:12px; padding:13px 14px; margin-top:16px;
+      }
+      .guide .note b{ color:var(--ink); }
+      .reset-btn{
+        margin-top:12px; border:1.5px solid var(--divider); background:var(--bg); color:var(--ink);
+        border-radius:10px; padding:10px 15px; font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit;
+      }
+      .reset-btn:hover{ border-color:var(--danger); color:var(--danger); }
+    </style>
+  </head>
+  <body>
+    <header class="page-head">
+      <h1>Log4Tax — MVP demo</h1>
+      <span class="demo-badge">Demo · sample data</span>
+      <p>An interactive mock-up of the Log4Tax iPhone app, built from the v1 spec. Everything on the phone is fictional sample data, nothing is saved, and every count is recomputed live from the sample records as you file documents.</p>
+    </header>
+
+    <div class="stage">
+      <!-- ================= PHONE ================= -->
+      <div class="phone" aria-label="Log4Tax app demo">
+        <div class="viewport">
+          <div class="notch"></div>
+          <div class="statusbar">
+            <span>09:41</span>
+            <span class="sicons">
+              <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+              <svg width="25" height="12" viewBox="0 0 25 12" aria-hidden="true"><rect x="0.5" y="0.5" width="20" height="11" rx="3" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="15" height="8" rx="1.8" fill="currentColor"/><path d="M23 4v4c.8-.3 1.3-1 1.3-2S23.8 4.3 23 4Z" fill="currentColor" opacity=".5"/></svg>
+            </span>
+          </div>
+
+          <div class="screens">
+            <!-- ===== HOME ===== -->
+            <section class="screen active" id="scr-home">
+              <div class="year-head">
+                <p class="yr">Tax year 2026/27</p>
+                <p class="sub">6 April 2026 – 5 April 2027 · Demo date: 18 October 2026</p>
+              </div>
+              <div class="boundary"><b>Collects documents only.</b> Log4Tax does not file your return, calculate tax, or give advice — it keeps the evidence, so January is just handing over a tidy pack.</div>
+              <div class="demo-strip">Sample household: one job, one rental property (“14 Maple Drive”), one sole-trader business. All names and figures are fictional.</div>
+
+              <h2 class="sec-title">Your packs</h2>
+              <div id="pack-cards"></div>
+
+              <h2 class="sec-title">Coming up</h2>
+              <div id="reminders"></div>
+
+              <button class="capture" id="capture-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+                Add a document
+              </button>
+              <p style="font-size:12px;color:var(--ink3);text-align:center;margin:10px 0 2px;">Capture is never more than two taps away. Everything works offline, on this device only.</p>
+            </section>
+
+            <!-- ===== INBOX ===== -->
+            <section class="screen" id="scr-inbox">
+              <div class="inbox-head">
+                <h2>Inbox</h2>
+                <p>Documents land here first, unfiled. Tap one to triage it — the app reads it <b>on this phone</b> and pre-fills the details. <b>Nothing is ever filed without you confirming it.</b></p>
+              </div>
+              <div id="inbox-list"></div>
+            </section>
+
+            <!-- ===== ADD ===== -->
+            <section class="screen" id="scr-add">
+              <div class="year-head">
+                <p class="yr" style="font-size:24px;">Add a document</p>
+                <p class="sub">Four ways in — each button below drops a fictional sample into the Inbox so you can triage it.</p>
+              </div>
+              <div id="routes"></div>
+              <div class="boundary" style="margin-top:16px;"><b>No email inbox on a server.</b> In v1 you forward a document to your own mail app, then share it into Log4Tax — no developer backend ever sees your documents.</div>
+            </section>
+
+            <!-- ===== EXPORT ===== -->
+            <section class="screen" id="scr-export">
+              <div class="year-head">
+                <p class="yr" style="font-size:24px;">Export a pack</p>
+                <p class="sub">The January flow: one ZIP per pack per tax year, for your accountant or your filing tool.</p>
+              </div>
+              <div class="pack-pills" id="export-pills"></div>
+              <div id="export-body"></div>
+            </section>
+          </div>
+
+          <!-- triage sheet -->
+          <div class="sheet-wrap" id="sheet-wrap">
+            <div class="scrim" id="scrim"></div>
+            <div class="sheet" role="dialog" aria-modal="true" aria-label="File document">
+              <div class="grab"></div>
+              <div id="sheet-body"></div>
+            </div>
+          </div>
+
+          <div class="toast" id="toast"></div>
+
+          <!-- tab bar -->
+          <nav class="tabbar" aria-label="Demo screens">
+            <button class="tab on" data-scr="home">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>
+              Home
+            </button>
+            <button class="tab" data-scr="inbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-5l-2 3h-6l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1Z"/></svg>
+              Inbox
+              <span class="bdg" id="inbox-badge">1</span>
+            </button>
+            <button class="tab" data-scr="add">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M12 8v8M8 12h8"/></svg>
+              Add
+            </button>
+            <button class="tab" data-scr="export">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+              Export
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- ================= GUIDE ================= -->
+      <aside class="guide">
+        <h2>Walk the key features</h2>
+        <p class="intro">Log4Tax catches tax documents as they arrive through the year, checks them against what <em>should</em> have arrived, and hands over one tidy pack in January. Tap a step to jump to it on the phone.</p>
+
+        <button class="step" data-goto="home">
+          <span class="n">1</span>
+          <span><h3>Readiness at a glance</h3>
+          <p>Three packs — Personal (included), Property and Business (paid add-ons). Each shows <b>Expected · Received · Missing</b>. The Property card’s month strip has <b>August missing</b>; the Business card flags a gap in the invoice sequence — <b>#1042 is missing</b> between #1041 and #1043.</p></span>
+        </button>
+        <button class="step" data-goto="inbox">
+          <span class="n">2</span>
+          <span><h3>Inbox triage — the under-10-second filing</h3>
+          <p>A letting-agent statement is waiting. On-device reading has pre-filled its date, amount, supplier and type. Note the <b>violet bucket</b>: residential finance costs sit apart from ordinary expenses, because Section 24 makes mortgage interest a 20% tax credit, not a deduction. Tap <b>File it</b> and watch August fill in on the Home screen.</p></span>
+        </button>
+        <button class="step" data-goto="add">
+          <span class="n">3</span>
+          <span><h3>Four ways a document gets in</h3>
+          <p><b>Scan, share sheet, Files import, forward-to-mail-then-share.</b> Each adds a sample with a story: the forwarded mortgage certificate belongs in the violet bucket; the Files import turns out to be the missing invoice #1042; the shared interest certificate is the one Personal is missing.</p></span>
+        </button>
+        <button class="step" data-goto="export">
+          <span class="n">4</span>
+          <span><h3>January export — Missing first</h3>
+          <p>Pick a pack and the export flow shows you the <b>Missing review before anything is generated</b> — gaps are stated, not discovered mid-filing. The pack preview builds its folder tree, <span class="mono">YYYY-MM-DD_type_source_amount</span> filenames, index and explicit Missing page from the live records.</p></span>
+        </button>
+        <button class="step" data-goto="home">
+          <span class="n">5</span>
+          <span><h3>Quiet reminders</h3>
+          <p>On Home, under the packs: the P11D deadline (received), the April–June interest-certificate season, a <b>gas safety expiry with days remaining</b> for the property, and the 31 January filing deadline. One reminder per missing item — never nagging.</p></span>
+        </button>
+
+        <div class="note"><b>The boundary, by design:</b> Log4Tax collects documents only — it does not file your return, calculate tax, or give advice. There is no account and no server; documents live on the phone behind Face ID, and the export index is an inventory of what was collected, never a set of tax figures.</div>
+        <button class="reset-btn" id="reset-btn">Reset the demo</button>
+      </aside>
+    </div>
+
+    <script>
+      /* ================= icons ================= */
+      var I = {
+        check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+        warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+        doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>',
+        camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3.2"/></svg>',
+        share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 13v7a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 20v-7"/></svg>',
+        folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9L9.2 3.9A2 2 0 0 0 7.5 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>',
+        mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>',
+        flame: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4.2 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.5-2.4 1-3 .5 1.5 2.3 3 3.5 3Z"/></svg>',
+        cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+        bank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5H3Z"/><path d="M5 8v8M9.5 8v8M14.5 8v8M19 8v8M3 20h18M3 16h18"/></svg>',
+        clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+        shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3.6 8-10V5l-8-3-8 3v7c0 6.4 8 10 8 10Z"/><path d="m9 11.5 2 2 4-4"/></svg>'
+      };
+
+      /* ================= demo data ================= */
+      var TODAY = new Date(2026, 9, 18); /* 18 Oct 2026 */
+      var MONTHS = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+      var DUE_UPTO = 5; /* Apr..Sep fully due; Oct (index 6) in progress */
+
+      var PACKS = {
+        personal: { name:'Personal', kind:'Base pack · included', paid:false },
+        property: { name:'Property — 14 Maple Drive', kind:'Property pack · one per property', paid:true },
+        business: { name:'Business — sole trader', kind:'Business pack · one per business', paid:true }
+      };
+
+      var TAGS = {
+        property: ['Rent, rates, insurance, ground rents','Repairs and maintenance','Legal, management & professional fees','Services including wages','Replacement of domestic items','Other property expenses'],
+        personal: ['Employment (SA102)','Savings & interest','Dividends','Pensions','Gift Aid & reliefs','Identity & HMRC letters'],
+        business: ['Sales income','Cost of goods bought for resale','Wages & staff costs','Car, van & travel','Rent, rates, power & insurance','Repairs & maintenance','Phone, stationery & office','Advertising','Bank & financial charges','Accountancy & professional fees','Other business expenses']
+      };
+      var FINANCE_TAG = 'Residential finance costs';
+
+      var PERSONAL_ITEMS = [
+        { label:'P60 — main job (Northgate Retail)', kind:'p60' },
+        { label:'P11D — benefits in kind', kind:'p11d' },
+        { label:'Interest certificate — Northbank', kind:'interest-cert', source:'northbank' },
+        { label:'Interest certificate — Fernhill Bank', kind:'interest-cert', source:'fernhill-bank' },
+        { label:'Annual tax certificate — broker', kind:'broker-cert' },
+        { label:'Gift Aid annual statement', kind:'gift-aid' },
+        { label:'Pension contributions statement (gross)', kind:'pension' }
+      ];
+
+      var uid = 0;
+      function doc(o){ o.id = ++uid; o.status = o.status || 'filed'; return o; }
+
+      function initialDocs(){
+        uid = 0;
+        return [
+          /* ---- Personal, already filed ---- */
+          doc({pack:'personal', kind:'p60', type:'P60', typeSlug:'p60', supplier:'Northgate Retail Ltd', source:'northgate-retail', date:'2026-05-18', amount:28450.00, tag:'Employment (SA102)', folder:'Employment (SA102)'}),
+          doc({pack:'personal', kind:'p11d', type:'P11D', typeSlug:'p11d', supplier:'Northgate Retail Ltd', source:'northgate-retail', date:'2026-07-03', amount:null, tag:'Employment (SA102)', folder:'Employment (SA102)'}),
+          doc({pack:'personal', kind:'interest-cert', type:'Interest certificate', typeSlug:'interest-certificate', supplier:'Northbank', source:'northbank', date:'2026-05-06', amount:486.13, tag:'Savings & interest', folder:'Savings & interest'}),
+          doc({pack:'personal', kind:'broker-cert', type:'Annual tax certificate', typeSlug:'annual-tax-certificate', supplier:'Harbourview Invest', source:'harbourview-invest', date:'2026-06-15', amount:221.40, tag:'Dividends', folder:'Dividends'}),
+          doc({pack:'personal', kind:'gift-aid', type:'Gift Aid statement', typeSlug:'gift-aid-statement', supplier:'Meadowbrook Hospice', source:'meadowbrook-hospice', date:'2026-04-20', amount:640.00, tag:'Gift Aid & reliefs', folder:'Gift Aid & reliefs'}),
+          doc({pack:'personal', kind:'pension', type:'Pension contributions statement', typeSlug:'pension-contributions', supplier:'Sterling Life', source:'sterling-life', date:'2026-04-28', amount:3600.00, tag:'Pensions', folder:'Pensions'}),
+          /* ---- Property, already filed ---- */
+          doc({pack:'property', kind:'agent-statement', monthIndex:0, type:'Letting agent statement', typeSlug:'agent-statement', supplier:'Harbourview Lettings', source:'harbourview-lettings', date:'2026-05-05', amount:1150.00, tag:null, folder:'Letting agent statements'}),
+          doc({pack:'property', kind:'agent-statement', monthIndex:1, type:'Letting agent statement', typeSlug:'agent-statement', supplier:'Harbourview Lettings', source:'harbourview-lettings', date:'2026-06-04', amount:1150.00, tag:null, folder:'Letting agent statements'}),
+          doc({pack:'property', kind:'agent-statement', monthIndex:2, type:'Letting agent statement', typeSlug:'agent-statement', supplier:'Harbourview Lettings', source:'harbourview-lettings', date:'2026-07-03', amount:1150.00, tag:null, folder:'Letting agent statements'}),
+          doc({pack:'property', kind:'agent-statement', monthIndex:3, type:'Letting agent statement', typeSlug:'agent-statement', supplier:'Harbourview Lettings', source:'harbourview-lettings', date:'2026-08-05', amount:1150.00, tag:null, folder:'Letting agent statements'}),
+          doc({pack:'property', kind:'agent-statement', monthIndex:5, type:'Letting agent statement', typeSlug:'agent-statement', supplier:'Harbourview Lettings', source:'harbourview-lettings', date:'2026-10-06', amount:1150.00, tag:null, folder:'Letting agent statements'}),
+          doc({pack:'property', kind:'insurance', type:'Insurance renewal', typeSlug:'insurance-renewal', supplier:'Northbank Insurance', source:'northbank-insurance', date:'2026-04-12', amount:486.20, tag:'Rent, rates, insurance, ground rents', folder:'Rent, rates, insurance, ground rents'}),
+          doc({pack:'property', kind:'deposit-cert', type:'Deposit protection certificate', typeSlug:'deposit-protection-certificate', supplier:'DepositGuard', source:'depositguard', date:'2025-11-02', amount:null, tag:null, folder:'Property record'}),
+          /* ---- Business, already filed ---- */
+          doc({pack:'business', kind:'bank-statement', monthIndex:0, type:'Bank statement', typeSlug:'bank-statement', supplier:'Northbank Business', source:'northbank-business', date:'2026-05-01', amount:null, tag:null, folder:'Bank statements'}),
+          doc({pack:'business', kind:'bank-statement', monthIndex:1, type:'Bank statement', typeSlug:'bank-statement', supplier:'Northbank Business', source:'northbank-business', date:'2026-06-01', amount:null, tag:null, folder:'Bank statements'}),
+          doc({pack:'business', kind:'bank-statement', monthIndex:2, type:'Bank statement', typeSlug:'bank-statement', supplier:'Northbank Business', source:'northbank-business', date:'2026-07-01', amount:null, tag:null, folder:'Bank statements'}),
+          doc({pack:'business', kind:'bank-statement', monthIndex:3, type:'Bank statement', typeSlug:'bank-statement', supplier:'Northbank Business', source:'northbank-business', date:'2026-08-03', amount:null, tag:null, folder:'Bank statements'}),
+          doc({pack:'business', kind:'bank-statement', monthIndex:4, type:'Bank statement', typeSlug:'bank-statement', supplier:'Northbank Business', source:'northbank-business', date:'2026-09-01', amount:null, tag:null, folder:'Bank statements'}),
+          doc({pack:'business', kind:'bank-statement', monthIndex:5, type:'Bank statement', typeSlug:'bank-statement', supplier:'Northbank Business', source:'northbank-business', date:'2026-10-01', amount:null, tag:null, folder:'Bank statements'}),
+          doc({pack:'business', kind:'sales-invoice', invoiceNo:1038, type:'Sales invoice #1038', typeSlug:'sales-invoice-1038', supplier:'Bramble Café', source:'bramble-cafe', date:'2026-06-11', amount:420.00, tag:'Sales income', folder:'Sales invoices'}),
+          doc({pack:'business', kind:'sales-invoice', invoiceNo:1039, type:'Sales invoice #1039', typeSlug:'sales-invoice-1039', supplier:'Otto & Grey Studio', source:'otto-grey-studio', date:'2026-07-09', amount:780.00, tag:'Sales income', folder:'Sales invoices'}),
+          doc({pack:'business', kind:'sales-invoice', invoiceNo:1040, type:'Sales invoice #1040', typeSlug:'sales-invoice-1040', supplier:'Bramble Café', source:'bramble-cafe', date:'2026-07-30', amount:420.00, tag:'Sales income', folder:'Sales invoices'}),
+          doc({pack:'business', kind:'sales-invoice', invoiceNo:1041, type:'Sales invoice #1041', typeSlug:'sales-invoice-1041', supplier:'Kiln Coffee House', source:'kiln-coffee-house', date:'2026-08-20', amount:655.50, tag:'Sales income', folder:'Sales invoices'}),
+          doc({pack:'business', kind:'sales-invoice', invoiceNo:1043, type:'Sales invoice #1043', typeSlug:'sales-invoice-1043', supplier:'Bramble Café', source:'bramble-cafe', date:'2026-09-17', amount:840.00, tag:'Sales income', folder:'Sales invoices'}),
+          /* ---- Inbox: the centrepiece ---- */
+          doc({pack:'property', kind:'agent-statement', monthIndex:4, status:'inbox', via:'Shared from Mail',
+               type:'Letting agent statement', typeSlug:'agent-statement', supplier:'Harbourview Lettings', source:'harbourview-lettings',
+               date:'2026-09-04', amount:1150.00, suggestedTag:'Legal, management & professional fees',
+               folder:'Letting agent statements',
+               detail:'August 2026 statement · rent collected £1,150.00 · agent fee £138.00'})
+        ];
+      }
+
+      var ROUTES = [
+        { id:'scan', icon:'camera', title:'Scan with the camera',
+          text:'Paper in a drawer becomes a clean PDF. Multi-page, straightened, stored on the phone.',
+          sample:{ pack:'property', kind:'repair-invoice', repairFlag:true, via:'Camera scan', type:'Repair invoice', typeSlug:'repair-invoice',
+                   supplier:'D. Okafor Plumbing & Heating', source:'d-okafor-plumbing', date:'2026-10-14', amount:240.00,
+                   suggestedTag:'Repairs and maintenance', folder:'Repairs and maintenance', lowConf:'amount',
+                   detail:'Boiler repair, 14 Maple Drive · photo of a paper invoice' } },
+        { id:'share', icon:'share', title:'Share sheet',
+          text:'From Mail, Files, Safari or any app — share a PDF or photo straight into Log4Tax.',
+          sample:{ pack:'personal', kind:'interest-cert', via:'Share sheet, from Mail', type:'Interest certificate', typeSlug:'interest-certificate',
+                   supplier:'Fernhill Bank', source:'fernhill-bank', date:'2026-05-12', amount:312.44,
+                   suggestedTag:'Savings & interest', folder:'Savings & interest',
+                   detail:'The interest certificate the Personal pack is missing' } },
+        { id:'files', icon:'folder', title:'Import from Files',
+          text:'Statements and invoices saved to iCloud Drive or another device import in one tap.',
+          sample:{ pack:'business', kind:'sales-invoice', invoiceNo:1042, via:'Files import', type:'Sales invoice #1042', typeSlug:'sales-invoice-1042',
+                   supplier:'Bramble Café', source:'bramble-cafe', date:'2026-09-03', amount:860.00,
+                   suggestedTag:'Sales income', folder:'Sales invoices',
+                   detail:'Found in iCloud Drive — the invoice the sequence check is missing' } },
+        { id:'forward', icon:'mail', title:'Forward to mail, then share',
+          text:'Forward the email to your own mailbox and share the attachment in. No Log4Tax server is involved.',
+          sample:{ pack:'property', kind:'mortgage-interest-cert', via:'Forwarded to Mail, then shared', type:'Mortgage interest certificate', typeSlug:'mortgage-interest-certificate',
+                   supplier:'Northbank Building Society', source:'northbank', date:'2026-10-09', amount:6214.18,
+                   suggestedTag:FINANCE_TAG, folder:FINANCE_TAG,
+                   detail:'Interest paid in the year — belongs in the violet finance-cost bucket' } }
+      ];
+
+      var state = { docs: initialDocs(), addedRoutes: {}, exportPack:'property', exportStage:'review' };
+
+      /* ================= helpers ================= */
+      function $(s){ return document.querySelector(s); }
+      function fmt(n){ return n == null ? '—' : '£' + n.toLocaleString('en-GB',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+      function fmtDate(iso){
+        var d = new Date(iso + 'T00:00:00');
+        return d.toLocaleDateString('en-GB',{day:'numeric', month:'short', year:'numeric'});
+      }
+      function daysUntil(d){ return Math.round((d - TODAY) / 86400000); }
+      function filed(pack, kind){ return state.docs.filter(function(d){ return d.status==='filed' && d.pack===pack && (!kind || d.kind===kind); }); }
+      function fileName(d){
+        var s = d.date + '_' + d.typeSlug + '_' + d.source;
+        if (d.amount != null) s += '_' + d.amount.toFixed(2);
+        return s + '.pdf';
+      }
+      function toast(msg){
+        var t = $('#toast'); t.textContent = msg; t.classList.add('show');
+        clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+      }
+
+      /* ================= readiness engine ================= */
+      function statementMonths(pack, kind){
+        var got = {};
+        filed(pack, kind).forEach(function(d){ got[d.monthIndex] = true; });
+        var missing = [], received = 0, later = 0;
+        for (var m = 0; m < 12; m++){
+          if (got[m]) received++;
+          else if (m <= DUE_UPTO) missing.push(m);
+          else later++;
+        }
+        return { received:received, missing:missing, later:later };
+      }
+      function invoiceGaps(){
+        var nums = filed('business','sales-invoice').map(function(d){ return d.invoiceNo; }).sort(function(a,b){ return a-b; });
+        if (nums.length < 2) return { gaps:[], range:null };
+        var gaps = [];
+        for (var n = nums[0]; n <= nums[nums.length-1]; n++) if (nums.indexOf(n) === -1) gaps.push(n);
+        return { gaps:gaps, range:[nums[0], nums[nums.length-1]] };
+      }
+      function readiness(pack){
+        if (pack === 'personal'){
+          var miss = PERSONAL_ITEMS.filter(function(it){
+            return !state.docs.some(function(d){ return d.status==='filed' && d.pack==='personal' && d.kind===it.kind && (!it.source || d.source===it.source); });
+          });
+          return { expected:PERSONAL_ITEMS.length, received:PERSONAL_ITEMS.length - miss.length, missing:miss.length, later:0,
+                   missingItems: miss.map(function(it){ return { label: it.label, why:'Expected in this section of your setup — not yet collected.' }; }) };
+        }
+        if (pack === 'property'){
+          var sm = statementMonths('property','agent-statement');
+          var ins = filed('property','insurance').length > 0;
+          var cert = filed('property','mortgage-interest-cert').length > 0;
+          var expected = 14, received = sm.received + (ins?1:0) + (cert?1:0);
+          var missingItems = sm.missing.map(function(m){ return { label:'Letting agent statement — ' + MONTHS[m] + ' ' + (m<=8?'2026':'2027'), why:'Monthly statement expected from Harbourview Lettings. Chase the agent while it is still easy to get.' }; });
+          if (!ins) missingItems.push({ label:'Insurance renewal document', why:'Annual document expected for this property.' });
+          var laterItems = [];
+          if (!cert) laterItems.push('Mortgage interest certificate — arrives April–June 2027, after the tax year ends');
+          for (var m = 0; m < 12; m++) if (m > DUE_UPTO && !filed('property','agent-statement').some(function(d){ return d.monthIndex===m; })) laterItems.push('Agent statement — ' + MONTHS[m] + ' (not yet due)');
+          return { expected:expected, received:received, missing:missingItems.length, later: sm.later + (cert?0:1),
+                   missingItems:missingItems, laterItems:laterItems };
+        }
+        var bm = statementMonths('business','bank-statement');
+        var g = invoiceGaps();
+        var bmiss = bm.missing.map(function(m){ return { label:'Business bank statement — ' + MONTHS[m], why:'Monthly statement expected for the business account.' }; });
+        g.gaps.forEach(function(n){ bmiss.push({ label:'Sales invoice #' + n + ' — gap in the sequence', why:'Invoices run #' + g.range[0] + '–#' + g.range[1] + ' with #' + n + ' missing and unexplained. A gap is flagged like a missing month.' }); });
+        return { expected:12, received:bm.received, missing:bmiss.length, later:bm.later, missingItems:bmiss, gaps:g.gaps, range:g.range };
+      }
+
+      /* ================= render: home ================= */
+      function countsHTML(r){
+        var h = '<div class="counts">' +
+          '<span class="c"><span class="dot e"></span>Expected <b class="num">' + r.expected + '</b></span>' +
+          '<span class="c"><span class="dot r"></span>Received <b class="num">' + r.received + '</b></span>' +
+          '<span class="c"><span class="dot m"></span>Missing <b class="num">' + r.missing + '</b></span>';
+        if (r.later) h += '<span class="c"><span class="dot l"></span>Due later <b class="num">' + r.later + '</b></span>';
+        return h + '</div>';
+      }
+      function stripHTML(){
+        var got = {}; filed('property','agent-statement').forEach(function(d){ got[d.monthIndex] = true; });
+        var cells = MONTHS.map(function(name, m){
+          var cls = got[m] ? 'got' : (m <= DUE_UPTO ? 'miss' : (m === DUE_UPTO + 1 ? 'due' : 'future'));
+          return '<div class="mcell ' + cls + '" title="' + name + '">' + name + '</div>';
+        }).join('');
+        return '<div class="strip-label"><span>Letting agent statements · Apr 2026 – Mar 2027</span></div>' +
+               '<div class="strip">' + cells + '</div>' +
+               '<div class="strip-legend"><span><span class="sw" style="background:var(--received)"></span>Received</span>' +
+               '<span><span class="sw" style="background:var(--missing-tint);border:1.5px solid var(--missing)"></span>Missing</span>' +
+               '<span><span class="sw" style="border:1.5px solid var(--divider)"></span>This month</span>' +
+               '<span><span class="sw" style="border:1.5px dashed var(--divider)"></span>Not yet due</span></div>';
+      }
+      function renderHome(){
+        var html = '';
+        ['personal','property','business'].forEach(function(key){
+          var p = PACKS[key], r = readiness(key);
+          html += '<div class="card"><div class="top"><div><h3>' + p.name + '</h3><div class="kind">' + p.kind + '</div></div>' +
+                  '<span class="pack-tag' + (p.paid ? ' paid' : '') + '">' + (p.paid ? 'Paid pack' : 'Included') + '</span></div>' +
+                  countsHTML(r);
+          if (key === 'property'){
+            html += stripHTML();
+            html += r.missing > 0
+              ? '<div class="state-line warn">' + I.warn + '<span>Missing-month alert: the ' + r.missingItems[0].label.replace('Letting agent statement — ','') + ' statement hasn’t arrived. One quiet reminder sent.</span></div>'
+              : '<div class="state-line ok">' + I.check + '<span>Every due statement is in. Nothing to chase.</span></div>';
+          } else if (key === 'business'){
+            html += r.gaps.length
+              ? '<div class="state-line warn">' + I.warn + '<span>Invoice-sequence gap: #' + r.gaps.join(', #') + ' missing between #' + r.range[0] + ' and #' + r.range[1] + '. Unexplained gaps stay flagged.</span></div>'
+              : '<div class="state-line ok">' + I.check + '<span>Invoice sequence complete — #' + r.range[0] + ' to #' + r.range[1] + ', no gaps.</span></div>';
+          } else {
+            html += r.missing > 0
+              ? '<div class="state-line warn">' + I.warn + '<span>Nearly there — ' + r.missingItems.map(function(i){ return i.label; }).join('; ') + ' still to collect.</span></div>'
+              : '<div class="state-line ok">' + I.check + '<span>Complete — everything switched on in your setup has been collected.</span></div>';
+          }
+          html += '</div>';
+        });
+        $('#pack-cards').innerHTML = html;
+        renderReminders();
+      }
+      function renderReminders(){
+        var p11d = filed('personal','p11d').length > 0;
+        var fernhill = state.docs.some(function(d){ return d.status==='filed' && d.kind==='interest-cert' && d.source==='fernhill-bank'; });
+        var gasDays = daysUntil(new Date(2026, 11, 12));
+        var fileDays = daysUntil(new Date(2027, 0, 31));
+        var items = [
+          { icon:'cal', title:'P11D from your employer', sub:'Employers must issue it by 6 July 2026', pill: p11d ? '<span class="pill ok">Received</span>' : '<span class="pill warn">Outstanding</span>' },
+          { icon:'bank', title:'Interest certificates — Apr to Jun', sub:'Banks issue one per account after the tax year. Northbank received' + (fernhill ? '; Fernhill Bank received too.' : '; Fernhill Bank still outstanding.'), pill: fernhill ? '<span class="pill ok">2 of 2 in</span>' : '<span class="pill warn">1 of 2 in</span>' },
+          { icon:'flame', title:'Gas safety certificate — 14 Maple Drive', sub:'Expires 12 December 2026 · one reminder ahead of expiry, then it stops', pill:'<span class="pill warn">' + gasDays + ' days left</span>' },
+          { icon:'shield', title:'Self Assessment filing deadline', sub:'31 January 2027 — Log4Tax keeps the evidence; the return is filed in your usual tool or by your accountant', pill:'<span class="pill plain">' + fileDays + ' days</span>' }
+        ];
+        $('#reminders').innerHTML = items.map(function(r){
+          return '<div class="rem"><div class="ric">' + I[r.icon] + '</div><div><div class="rt">' + r.title + '</div><div class="rs">' + r.sub + '</div></div>' + r.pill + '</div>';
+        }).join('');
+      }
+
+      /* ================= render: inbox ================= */
+      function renderInbox(){
+        var docs = state.docs.filter(function(d){ return d.status==='inbox'; });
+        $('#inbox-badge').textContent = docs.length;
+        $('#inbox-badge').classList.toggle('zero', docs.length === 0);
+        if (!docs.length){
+          $('#inbox-list').innerHTML = '<div class="empty">' + I.check + '<div class="big">Inbox zero</div><p>Everything captured has been filed. Add another sample document from the Add tab to keep exploring.</p></div>';
+          return;
+        }
+        $('#inbox-list').innerHTML = docs.map(function(d){
+          return '<button class="doc-row" data-file="' + d.id + '"><span class="thumb">' + I.doc + '<span>PDF</span></span>' +
+            '<span><span class="dt">' + d.type + '</span><span class="ds">' + d.supplier + ' · ' + fmtDate(d.date) + ' · <span class="num">' + fmt(d.amount) + '</span><br>Arrived via ' + d.via + ' · read on-device, ready to confirm</span></span>' +
+            '<span class="file-chip">File</span></button>';
+        }).join('');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-file]'), function(b){
+          b.addEventListener('click', function(){ openTriage(parseInt(b.getAttribute('data-file'), 10)); });
+        });
+      }
+
+      /* ================= render: add routes ================= */
+      function renderRoutes(){
+        $('#routes').innerHTML = ROUTES.map(function(r){
+          var done = !!state.addedRoutes[r.id];
+          return '<div class="route"><div class="ric">' + I[r.icon] + '</div><div style="flex:1"><h3>' + r.title + '</h3><p>' + r.text + '</p>' +
+            '<span class="sample">' + r.sample.type + ' — ' + r.sample.supplier + '</span></div>' +
+            '<button data-route="' + r.id + '"' + (done ? ' class="done" disabled' : '') + '>' + (done ? 'In Inbox ✓' : 'Add sample') + '</button></div>';
+        }).join('');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-route]'), function(b){
+          b.addEventListener('click', function(){
+            var r = ROUTES.filter(function(x){ return x.id === b.getAttribute('data-route'); })[0];
+            var d = doc(Object.assign({}, r.sample, { status:'inbox' }));
+            state.docs.push(d);
+            state.addedRoutes[r.id] = true;
+            renderRoutes(); renderInbox();
+            toast('Added to Inbox — ' + r.sample.type);
+          });
+        });
+      }
+
+      /* ================= triage sheet ================= */
+      var triage = null;
+      function openTriage(id){
+        var d = state.docs.filter(function(x){ return x.id === id; })[0];
+        if (!d) return;
+        triage = { doc:d, pack:d.pack, tag:d.suggestedTag || null, editing:false, repair: d.repairFlag ? 'Repair' : null, started: Date.now(), _tick:null };
+        renderSheet();
+        $('#sheet-wrap').classList.add('open');
+      }
+      function closeSheet(){
+        if (triage && triage._tick) clearInterval(triage._tick);
+        $('#sheet-wrap').classList.remove('open'); triage = null;
+      }
+      function fieldRow(label, value, lowConf){
+        if (triage.editing) return '<div class="field"><span class="fl">' + label + '</span><input data-field="' + label + '" value="' + String(value).replace(/"/g,'&quot;') + '"></div>';
+        return '<div class="field"><span class="fl">' + label + '</span><span class="fv">' + value + (lowConf ? '<small>Check this one — the scan was faint here</small>' : '') + '</span></div>';
+      }
+      function renderSheet(){
+        var d = triage.doc;
+        var tags = TAGS[triage.pack];
+        var chips = tags.map(function(t){
+          return '<button class="chip' + (triage.tag === t ? ' on' : '') + '" data-tag="' + t + '">' + t + '</button>';
+        }).join('') + '<button class="chip' + (!triage.tag ? ' on' : '') + '" data-tag="">No tag yet</button>';
+        var finance = '';
+        if (triage.pack === 'property'){
+          finance = '<div class="finance-box"><div class="fh">' + I.shield + 'Kept separate — finance costs</div>' +
+            '<p>Mortgage interest on a rented home is <b>not</b> an expense: Section 24 turns it into a 20% tax credit. Log4Tax keeps it in its own bucket so the two never mix.</p>' +
+            '<div class="chips"><button class="chip violet' + (triage.tag === FINANCE_TAG ? ' on' : '') + '" data-tag="' + FINANCE_TAG + '">' + FINANCE_TAG + '</button></div></div>';
+        }
+        var repair = '';
+        if (d.repairFlag){
+          repair = '<div class="picker-label">Repair or improvement?</div><div class="seg">' +
+            '<button data-repair="Repair" class="' + (triage.repair === 'Repair' ? 'on' : '') + '">Repair</button>' +
+            '<button data-repair="Improvement" class="' + (triage.repair === 'Improvement' ? 'on' : '') + '">Improvement</button></div>' +
+            '<p class="hmrc-line">HMRC’s line: a repair restores something to its original condition; an improvement makes it better than it was. Improvements go to the capital packet, not the expense list. The choice is always yours — the app never decides.</p>';
+        }
+        $('#sheet-body').innerHTML =
+          '<h2>File this document</h2>' +
+          '<p class="lead">' + d.type + ' · arrived via ' + d.via + '. Read on this phone — no copy left the device.</p>' +
+          '<div class="confirm-note">Nothing is filed until you tap “File it”. Check the details the app read, correct anything wrong, then confirm.</div>' +
+          '<div class="timer-line">' + I.clock + '<span>Triaging… target: under 10 seconds. <span class="num" id="triage-timer">0.0s</span></span></div>' +
+          fieldRow('Date', fmtDate(d.date)) +
+          fieldRow('Total amount', d.amount == null ? 'No amount on this document' : fmt(d.amount), d.lowConf === 'amount') +
+          fieldRow('Supplier / source', d.supplier) +
+          fieldRow('Document type', d.type) +
+          (d.detail ? '<div class="field"><span class="fl">Read from page</span><span class="fv" style="font-weight:500;font-size:13px;color:var(--ink2)">' + d.detail + '</span></div>' : '') +
+          '<div class="picker-label">File into pack</div><div class="chips">' +
+            Object.keys(PACKS).map(function(k){ return '<button class="chip' + (triage.pack === k ? ' on' : '') + '" data-pack="' + k + '">' + PACKS[k].name + '</button>'; }).join('') +
+          '</div>' +
+          '<div class="picker-label">Category — the app suggests, you decide</div><div class="chips">' + chips + '</div>' +
+          finance + repair +
+          '<div class="btnrow">' +
+            '<button class="btn primary" id="file-it">File it</button>' +
+            '<button class="btn edit" id="edit-fields">' + (triage.editing ? 'Done editing' : 'Edit fields') + '</button>' +
+            '<button class="btn edit" id="cancel-sheet" style="border:0">Not now</button>' +
+          '</div>';
+        if (triage._tick) clearInterval(triage._tick);
+        triage._tick = setInterval(function(){
+          var el = $('#triage-timer'); if (!el){ return; }
+          el.textContent = ((Date.now() - triage.started) / 1000).toFixed(1) + 's';
+        }, 100);
+        bindSheet();
+      }
+      function bindSheet(){
+        Array.prototype.forEach.call(document.querySelectorAll('[data-tag]'), function(b){
+          b.addEventListener('click', function(){ triage.tag = b.getAttribute('data-tag') || null; renderSheet(); });
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-pack]'), function(b){
+          b.addEventListener('click', function(){
+            triage.pack = b.getAttribute('data-pack');
+            triage.tag = (triage.pack === triage.doc.pack) ? (triage.doc.suggestedTag || null) : null;
+            renderSheet();
+          });
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-repair]'), function(b){
+          b.addEventListener('click', function(){ triage.repair = b.getAttribute('data-repair'); renderSheet(); });
+        });
+        $('#edit-fields').addEventListener('click', function(){
+          if (triage.editing){
+            var d = triage.doc;
+            Array.prototype.forEach.call(document.querySelectorAll('.sheet input[data-field]'), function(inp){
+              var f = inp.getAttribute('data-field'), v = inp.value.trim();
+              if (f === 'Supplier / source' && v) d.supplier = v;
+              if (f === 'Total amount' && v){ var n = parseFloat(v.replace(/[^0-9.]/g,'')); if (!isNaN(n)) d.amount = n; }
+            });
+          }
+          triage.editing = !triage.editing; renderSheet();
+        });
+        $('#cancel-sheet').addEventListener('click', closeSheet);
+        $('#file-it').addEventListener('click', fileIt);
+      }
+      function fileIt(){
+        var d = triage.doc, secs = ((Date.now() - triage.started) / 1000).toFixed(1);
+        if (triage._tick) clearInterval(triage._tick);
+        d.status = 'filed'; d.pack = triage.pack; d.tag = triage.tag;
+        if (d.tag === FINANCE_TAG) d.folder = FINANCE_TAG;
+        if (d.kind === 'repair-invoice') d.folder = (triage.repair === 'Improvement') ? 'Capital packet' : (d.tag || d.folder);
+        renderHome(); renderInbox();
+        if ($('#scr-export').classList.contains('active')) renderExport();
+        $('#sheet-body').innerHTML = '<div class="filed-done">' + I.check +
+          '<div class="big">Filed</div>' +
+          '<p>' + d.type + ' → <b>' + PACKS[d.pack].name + '</b>' + (d.tag ? ' · ' + d.tag : '') + '<br>Filed in <span class="num">' + secs + 's</span>' + (parseFloat(secs) < 10 ? ' — inside the 10-second target.' : '.') + '<br>Home and the month strip have updated.</p>' +
+          '<div class="btnrow"><button class="btn primary" id="done-close">Back to Home</button></div></div>';
+        $('#done-close').addEventListener('click', function(){ closeSheet(); goto('home'); });
+      }
+
+      /* ================= export ================= */
+      function missingListHTML(items){
+        if (!items.length) return '<div class="state-line ok" style="margin-top:4px">' + I.check + '<span>Nothing missing. Everything expected for this pack has been collected.</span></div>';
+        return items.map(function(i){
+          return '<div class="miss-item">' + I.warn + '<div><div>' + i.label + '</div><div class="why">' + i.why + '</div></div></div>';
+        }).join('');
+      }
+      function exportTree(pack){
+        var docs = filed(pack).slice().sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+        var folders = {};
+        docs.forEach(function(d){ (folders[d.folder] = folders[d.folder] || []).push(d); });
+        var root = PACKS[pack].name.replace(/[^A-Za-z0-9]+/g,'-') + '_2026-27';
+        var lines = [root + '/', '  index.pdf', '  index.csv', '  MISSING.pdf   (the Missing page, inside the pack)'];
+        Object.keys(folders).sort().forEach(function(f){
+          lines.push('  ' + f + '/' + (f === FINANCE_TAG ? '   (violet bucket, kept apart)' : ''));
+          folders[f].forEach(function(d){ lines.push('    ' + fileName(d)); });
+        });
+        return { text: lines.join('\n'), docs: docs };
+      }
+      function renderExport(){
+        $('#export-pills').innerHTML = Object.keys(PACKS).map(function(k){
+          return '<button data-epack="' + k + '" class="' + (state.exportPack === k ? 'on' : '') + '">' + PACKS[k].name + '</button>';
+        }).join('');
+        Array.prototype.forEach.call(document.querySelectorAll('[data-epack]'), function(b){
+          b.addEventListener('click', function(){ state.exportPack = b.getAttribute('data-epack'); state.exportStage = 'review'; renderExport(); });
+        });
+        var pack = state.exportPack, r = readiness(pack), body = $('#export-body');
+        if (state.exportStage === 'review'){
+          var later = (r.laterItems && r.laterItems.length)
+            ? '<div class="sec-title" style="margin-top:16px">Expected later — not missing</div>' + r.laterItems.map(function(l){ return '<div class="miss-item"><span style="color:var(--ink3);display:flex;width:16px;height:16px">' + I.clock + '</span><div>' + l + '</div></div>'; }).join('')
+            : '';
+          body.innerHTML =
+            '<div class="card" style="margin-top:14px"><h3 style="font-size:15.5px">Step 1 — Missing review</h3>' +
+            '<p style="font-size:13px;color:var(--ink2);line-height:1.5;margin:5px 0 4px">Before anything is generated, here is what this pack is still missing. Gaps are stated now — not discovered halfway through a return.</p>' +
+            missingListHTML(r.missingItems) + later + '</div>' +
+            '<div class="warn-banner">' + I.warn + '<span>The exported ZIP is <b>not encrypted</b>. Send it somewhere you trust — AirDrop, Files, or email to your accountant.</span></div>' +
+            '<div class="btnrow">' +
+              (r.missingItems.length
+                ? '<button class="btn ghost" id="export-go">Export anyway — with the Missing page included</button>'
+                : '<button class="btn primary" id="export-go">Create export pack</button>') +
+            '</div>';
+          $('#export-go').addEventListener('click', function(){ state.exportStage = 'preview'; renderExport(); $('#scr-export').scrollTop = 0; });
+          return;
+        }
+        var t = exportTree(pack);
+        var treeHTML = t.text.replace(/&/g,'&amp;').replace(/</g,'&lt;')
+          .replace(/(Residential finance costs\/[^\n]*)/g, '<span class="violet">$1</span>')
+          .replace(/(MISSING\.pdf[^\n]*)/g, '<span style="color:var(--missing);font-weight:700">$1</span>');
+        var rows = t.docs.map(function(d){
+          return '<tr><td>' + d.type + '</td><td class="num">' + fmtDate(d.date) + '</td><td class="amt num">' + fmt(d.amount) + '</td><td>' + (d.tag || '—') + '</td></tr>';
+        }).join('');
+        var missPage = r.missingItems.length
+          ? '<div class="missing-page"><h4>MISSING.pdf — page 1 of the index</h4><div style="font-size:13px">Expected but not collected for 2026/27:</div><ul>' + r.missingItems.map(function(i){ return '<li>' + i.label + '</li>'; }).join('') + '</ul></div>'
+          : '<div class="missing-page" style="border-color:var(--received)"><h4 style="color:var(--received)">MISSING.pdf — nothing missing</h4><div style="font-size:13px">The Missing page is still included, and says so. A stated “none” beats a silent gap.</div></div>';
+        body.innerHTML =
+          '<div class="card" style="margin-top:14px"><h3 style="font-size:15.5px">Step 2 — Your pack</h3>' +
+          '<p class="mono" style="font-size:12.5px;margin:6px 0 10px;word-break:break-all">Log4Tax_' + PACKS[pack].name.replace(/[^A-Za-z0-9]+/g,'-') + '_2026-27.zip</p>' +
+          '<div class="tree mono">' + treeHTML + '</div></div>' +
+          '<div class="card"><h3 style="font-size:15.5px">Index — index.pdf + index.csv</h3>' +
+          '<p style="font-size:12.5px;color:var(--ink2);margin:4px 0 6px;line-height:1.5">Every document, listed once: type, date, amount and tag. An inventory of what was collected — never a set of tax figures.</p>' +
+          '<table class="index"><tr><th>Type</th><th>Date</th><th style="text-align:right">Amount</th><th>Tag</th></tr>' + rows + '</table></div>' +
+          missPage +
+          '<div class="warn-banner">' + I.warn + '<span>Reminder: this ZIP is <b>not encrypted</b>.</span></div>' +
+          '<div class="btnrow"><button class="btn primary" id="dl-manifest">Download pack manifest (.txt)</button>' +
+          '<button class="btn edit" id="export-back">Back to Missing review</button></div>';
+        $('#export-back').addEventListener('click', function(){ state.exportStage = 'review'; renderExport(); });
+        $('#dl-manifest').addEventListener('click', function(){
+          var txt = 'Log4Tax export pack — DEMO (sample data, fictional)\nPack: ' + PACKS[pack].name + ' · Tax year 2026/27\nNote: the real ZIP is unencrypted.\n\n' + t.text +
+            '\n\nINDEX\n' + t.docs.map(function(d){ return fileName(d) + ' | ' + d.type + ' | ' + d.date + ' | ' + (d.amount == null ? '—' : d.amount.toFixed(2)) + ' | ' + (d.tag || '—'); }).join('\n') +
+            '\n\nMISSING\n' + (r.missingItems.length ? r.missingItems.map(function(i){ return '- ' + i.label; }).join('\n') : 'None.') + '\n';
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(new Blob([txt], { type:'text/plain' }));
+          a.download = 'Log4Tax_' + PACKS[pack].name.replace(/[^A-Za-z0-9]+/g,'-') + '_2026-27_manifest.txt';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+          toast('Manifest downloaded');
+        });
+      }
+
+      /* ================= navigation ================= */
+      function goto(name){
+        Array.prototype.forEach.call(document.querySelectorAll('.screen'), function(s){ s.classList.toggle('active', s.id === 'scr-' + name); });
+        Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){ t.classList.toggle('on', t.getAttribute('data-scr') === name); });
+        if (name === 'export') renderExport();
+        var scr = $('#scr-' + name); if (scr) scr.scrollTop = 0;
+      }
+      Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
+        t.addEventListener('click', function(){ goto(t.getAttribute('data-scr')); });
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-goto]'), function(b){
+        b.addEventListener('click', function(){ goto(b.getAttribute('data-goto')); });
+      });
+      $('#capture-btn').addEventListener('click', function(){ goto('add'); });
+      $('#scrim').addEventListener('click', closeSheet);
+      $('#reset-btn').addEventListener('click', function(){
+        state = { docs: initialDocs(), addedRoutes:{}, exportPack:'property', exportStage:'review' };
+        closeSheet(); renderHome(); renderInbox(); renderRoutes(); goto('home');
+        toast('Demo reset to its starting state');
+      });
+
+      /* ================= boot ================= */
+      renderHome(); renderInbox(); renderRoutes();
+    </script>
+  </body>
+</html>
